@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import type { Me } from '../lib/types'
 import { saveWorkHours } from '../lib/data'
+import { dispatcherCron } from '../../shared/dispatcherCron'
 
 const DAYS = [
   { d: 1, l: 'T2' }, { d: 2, l: 'T3' }, { d: 3, l: 'T4' }, { d: 4, l: 'T5' }, { d: 5, l: 'T6' }, { d: 6, l: 'T7' }, { d: 0, l: 'CN' },
@@ -27,10 +28,7 @@ export function WorkHoursEditor({ me, onSaved, onToast }: { me: Me; onSaved: (m:
     }
   }
 
-  const startH = Number(start.slice(0, 2))
-  const endH = Number(end.slice(0, 2)) - (end.endsWith(':00') ? 1 : 0)
-  const dow = [...days].sort((a, b) => a - b).join(',')
-  const hint = valid ? `Lịch cho tác vụ hẹn giờ "dieu-phoi": mỗi 15 phút (*/15 ${startH}-${endH} * * ${dow})` : ''
+  const hint = valid ? `Lịch cho tác vụ hẹn giờ "dieu-phoi": ${dispatcherCron({ workDays: days, workStart: start, workEnd: end })}` : ''
 
   return (
     <section className="hours rise">

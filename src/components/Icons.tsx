@@ -58,3 +58,6 @@ export function SourceIcon({ kind }: { kind: string }) {
 export const IconTeam = () => (
   <svg viewBox="0 0 24 24" {...s}><circle cx="9" cy="8" r="3.2" /><path d="M3.5 19c.6-3.1 2.9-5 5.5-5s4.9 1.9 5.5 5" /><circle cx="17" cy="9" r="2.4" /><path d="M15.6 14.2c2.3-.3 4.4 1.2 4.9 4.3" /></svg>
 )
+export const IconGuide = () => (
+  <svg viewBox="0 0 24 24" {...s}><circle cx="12" cy="12" r="8.5" /><path d="M15.5 8.5l-2 5-5 2 2-5z" /></svg>
+)

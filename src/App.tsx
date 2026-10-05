@@ -14,9 +14,10 @@ import Connections from './components/Connections'
 import Reflect from './components/Reflect'
 import Team from './components/Team'
 import Login from './components/Login'
-import { IconDesk, IconClock, IconPlug, IconThink, IconTeam } from './components/Icons'
+import { IconDesk, IconClock, IconPlug, IconThink, IconTeam, IconGuide } from './components/Icons'
+import Guide from './components/Guide'
 
-type View = 'desk' | 'team' | 'schedule' | 'connections' | 'reflect'
+type View = 'desk' | 'team' | 'schedule' | 'connections' | 'reflect' | 'guide'
 
 const NAV: { id: View; label: string; Icon: () => ReactElement }[] = [
   { id: 'desk', label: 'Bàn điều phối', Icon: IconDesk },
@@ -24,6 +25,7 @@ const NAV: { id: View; label: string; Icon: () => ReactElement }[] = [
   { id: 'schedule', label: 'Lịch chạy', Icon: IconClock },
   { id: 'connections', label: 'Kết nối', Icon: IconPlug },
   { id: 'reflect', label: 'Nhìn lại tuần', Icon: IconThink },
+  { id: 'guide', label: 'Nối Claude', Icon: IconGuide },
 ]
 
 export default function App() {
@@ -106,6 +108,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
 
   function go(v: View) {
     setOpenTask(null)
+    if (v === 'guide' && viewing !== me.id) setViewing(me.id)
     setView(v)
   }
   function visit(personId: string) {
@@ -211,7 +214,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
           </div>
         )}
 
-        {ws && view !== 'team' && <PresenceBar owner={ws.owner} isMine={ws.isMine} now={now} onConnect={() => go('connections')} />}
+        {ws && view !== 'team' && <PresenceBar owner={ws.owner} isMine={ws.isMine} now={now} onConnect={() => go('guide')} />}
 
         {err && (
           <div className="banner banner--bad" role="alert">
@@ -229,7 +232,9 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
             {task ? (
               <TaskSpace task={task} readOnly={readOnly} backLabel={ws.isMine ? 'Bàn điều phối' : `Bàn của ${ws.owner.name}`} onBack={() => setOpenTask(null)} onFire={fire} onSend={(actionId, note) => send(task, actionId, note)} onCancel={cancel} now={now} />
             ) : view === 'desk' ? (
-              <Desk tasks={ws.tasks} activity={ws.activity} booted={booted} now={now} readOnly={readOnly} who={who} onOpen={setOpenTask} onFire={fire} />
+              <Desk tasks={ws.tasks} activity={ws.activity} booted={booted} now={now} readOnly={readOnly} who={who} onOpen={setOpenTask} onFire={fire} onGuide={() => go('guide')} />
+            ) : view === 'guide' ? (
+              ws.isMine ? <Guide me={me} claude={claude} tasks={ws.tasks} presence={ws.owner.presence} /> : <Guide me={me} claude={null} tasks={[]} presence="never" />
             ) : view === 'schedule' ? (
               <Schedule tasks={ws.tasks} now={now} readOnly={readOnly} onChanged={refresh} onToast={setToast} />
             ) : view === 'connections' ? (

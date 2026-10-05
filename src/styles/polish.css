@@ -15,3 +15,33 @@
 }
 .mate__admin:hover { color: var(--bad); border-color: rgba(255, 92, 77, .45); }
 .mate__admin.is-armed { color: var(--bad); border-color: var(--bad); background: var(--bad-dim); }
+
+/* ---------- Nối Claude ---------- */
+.guide__bar { height: 4px; border-radius: 2px; background: var(--line-soft); margin-top: 22px; max-width: 520px; overflow: hidden; }
+.guide__bar span { display: block; height: 100%; background: var(--run); transition: width .8s var(--ease); }
+.guide { list-style: none; margin: 0 0 60px; padding: 0; display: grid; gap: 14px; max-width: 860px; }
+.guide__step { position: relative; padding: 20px 22px 18px 58px; border-radius: 16px; background: var(--ink-raised); border: 1px solid var(--line-soft); }
+.guide__step::before {
+  content: '';
+  position: absolute;
+  left: 20px;
+  top: 22px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid var(--line);
+}
+.guide__step.is-done::before { background: var(--run); border-color: var(--run); box-shadow: 0 0 0 4px var(--run-dim); }
+.guide__step.is-done::after { content: '✓'; position: absolute; left: 26px; top: 22px; color: #14161c; font-weight: 700; font-size: 14px; }
+.guide__step h2 { margin: 0 0 8px; font-family: var(--display); font-size: 18px; font-weight: 650; }
+.guide__step.is-done h2 { color: var(--fg-2); }
+.guide__step p { margin: 0 0 10px; color: var(--fg-2); font-size: 14px; line-height: 1.6; }
+.guide__step b { color: var(--fg); font-weight: 600; }
+.guide__step a { color: var(--needs); }
+.guide__step code { font-family: var(--mono); font-size: 13px; }
+.guide__fine { font-size: 12.5px !important; color: var(--fg-3) !important; }
+.guide__check { display: inline-flex; align-items: center; gap: 8px; font-size: 14px; color: var(--fg-2); cursor: pointer; }
+.copy { display: flex; align-items: flex-start; gap: 10px; padding: 10px 10px 10px 14px; border-radius: 11px; background: var(--ink-sunken); border: 1px solid var(--line-soft); margin-bottom: 10px; }
+.copy pre { flex: 1; min-width: 0; margin: 0; white-space: pre-wrap; word-break: break-word; font: 13px/1.55 var(--mono); color: var(--needs); }
+.copy button { flex: none; height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 13px; }
+.copy button:hover { border-color: var(--needs); background: var(--needs-dim); }

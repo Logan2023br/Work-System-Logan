@@ -81,6 +81,7 @@ export default function Desk({
   who,
   onOpen,
   onFire,
+  onGuide,
 }: {
   tasks: Task[]
   activity: ActivityEvent[]
@@ -90,6 +91,7 @@ export default function Desk({
   who: string
   onOpen: (id: string) => void
   onFire: (t: Task) => void | Promise<void>
+  onGuide: () => void
 }) {
   const waiting = tasks.filter((t) => t.state === 'needs-you' || t.state === 'blocked')
   const count = useCountUp(waiting.length, booted, 700)
@@ -123,6 +125,11 @@ export default function Desk({
               ? `${waiting.map((t) => t.name).join(' và ')} không đi tiếp được nếu không có ${who}. Những việc còn lại vẫn chạy theo lịch.`
               : 'Mọi task đều chạy đúng lịch và không báo lỗi nào.'}
         </p>
+        {tasks.length === 0 && who === 'bạn' && (
+          <button className="hero__jump rise" style={{ animationDelay: '.24s' }} onClick={onGuide}>
+            Mở hướng dẫn Nối Claude
+          </button>
+        )}
       </header>
 
       <div className="desk">
