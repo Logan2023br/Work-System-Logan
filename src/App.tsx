@@ -44,10 +44,10 @@ export default function App() {
   if (fatal) return <div className="loading loading--bad">{fatal}</div>
   if (me === undefined) return <div className="loading">đang mở bàn điều phối…</div>
   if (me === null) return <Login error={loginError} />
-  return <Shell me={me} />
+  return <Shell me={me} onMe={setMe} />
 }
 
-function Shell({ me }: { me: Me }) {
+function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
   const [view, setView] = useState<View>('desk')
   const [viewing, setViewing] = useState<string>(me.id)
   const [ws, setWs] = useState<Workspace | null>(null)
@@ -215,9 +215,9 @@ function Shell({ me }: { me: Me }) {
             ) : view === 'desk' ? (
               <Desk tasks={ws.tasks} activity={ws.activity} booted={booted} now={now} readOnly={readOnly} who={who} onOpen={setOpenTask} onFire={fire} />
             ) : view === 'schedule' ? (
-              <Schedule tasks={ws.tasks} now={now} />
+              <Schedule tasks={ws.tasks} now={now} readOnly={readOnly} onChanged={refresh} onToast={setToast} />
             ) : view === 'connections' ? (
-              <Connections connections={ws.connections} tasks={ws.tasks} claude={ws.isMine ? claude : null} onRevoke={revoke} />
+              <Connections connections={ws.connections} tasks={ws.tasks} claude={ws.isMine ? claude : null} onRevoke={revoke} me={ws.isMine ? me : null} onMeSaved={(m) => { onMe(m); refresh() }} onToast={setToast} />
             ) : (
               <Reflect reflect={ws.reflect} tasks={ws.tasks} />
             )}

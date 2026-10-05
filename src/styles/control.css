@@ -179,3 +179,59 @@
 .blk__tip-row { display: flex; align-items: center; gap: 6px; }
 .blk__tip-row b { margin-left: auto; padding-left: 12px; font-family: var(--mono); font-weight: 500; }
 .blk__toggle { margin-top: 10px; color: var(--fg-3); font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
+
+/* ---------- sửa lịch ---------- */
+.job__edit { margin-left: 8px; color: var(--fg-3); font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
+.job__edit:hover { color: var(--needs); }
+.cron-ed {
+  margin: -6px 0 14px;
+  padding: 16px;
+  border-radius: 0 0 14px 14px;
+  background: var(--ink-sunken);
+  border: 1px solid var(--line-soft);
+  border-top: 0;
+  display: grid;
+  gap: 12px;
+}
+.cron-ed__field { display: grid; gap: 6px; font-size: 12.5px; color: var(--fg-3); }
+.cron-ed__field input {
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--ink);
+  color: var(--needs);
+  font: 500 15px var(--mono);
+}
+.cron-ed__field input:focus { outline: none; border-color: var(--needs); }
+.cron-ed__preview { display: grid; gap: 4px; font-size: 13.5px; color: var(--fg-2); }
+.cron-ed__preview b { color: var(--fg); font-weight: 600; }
+.cron-ed__preview.is-bad { color: var(--bad); }
+.cron-ed__actions { display: flex; gap: 8px; justify-content: flex-end; }
+
+/* ---------- khung giờ ---------- */
+.hours { margin: 0 0 30px; padding: 22px; border-radius: 16px; background: linear-gradient(180deg, var(--ink-raised), var(--ink)); border: 1px solid var(--line); }
+.hours__days { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.hours__day {
+  width: 46px;
+  height: 36px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  color: var(--fg-3);
+  font: 600 13px var(--mono);
+}
+.hours__day[aria-pressed='true'] { background: var(--needs-dim); border-color: var(--needs); color: var(--needs); }
+.hours__times { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; font-size: 14px; color: var(--fg-2); }
+.hours__times input {
+  margin-left: 6px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--ink-sunken);
+  color: var(--fg);
+  font: 500 14px var(--mono);
+  color-scheme: dark;
+}
+.hours__err { color: var(--bad); font-size: 13px; margin: 10px 0 0; }
+.hours__hint { color: var(--fg-3); font: 12px var(--mono); margin: 12px 0 0; }

@@ -1,4 +1,7 @@
-import type { Task } from '../lib/types'
+import { Fragment, useEffect, useState } from 'react'
+import type { SchedulePreview, Task } from '../lib/types'
+import { previewCron, savePaused, saveSchedule } from '../lib/data'
+import { Switch } from './Bits'
 import { tone, TONE_HEX, until, dayAndClock } from '../lib/format'
 import { weekSlots } from '../../shared/cronSlots'
 
@@ -6,7 +9,83 @@ const DAY_NAMES = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 const FROM = 4
 const TO = 21
 
-export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
+function CronEditor({ task, onDone, onToast }: { task: Task; onDone: () => void; onToast: (m: string) => void }) {
+  const [cron, setCron] = useState(task.cron)
+  const [preview, setPreview] = useState<SchedulePreview | null>(null)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    const id = window.setTimeout(() => {
+      previewCron(cron).then(setPreview).catch(() => setPreview(null))
+    }, 350)
+    return () => window.clearTimeout(id)
+  }, [cron])
+
+  async function save() {
+    setSaving(true)
+    try {
+      await saveSchedule(task.id, cron)
+      onToast(`Đã đổi lịch "${task.name}"`)
+      onDone()
+    } catch (e) {
+      onToast((e as Error).message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="cron-ed">
+      <label className="cron-ed__field">
+        <span>Cron (giờ Việt Nam)</span>
+        <input value={cron} onChange={(e) => setCron(e.target.value)} spellCheck={false} autoFocus />
+      </label>
+      <div className={`cron-ed__preview${preview && !preview.valid ? ' is-bad' : ''}`} aria-live="polite">
+        {!preview ? '…' : !preview.valid ? 'Cron chưa hợp lệ — cần 5 trường, ví dụ 0 9 * * 1-5' : (
+          <>
+            <b>{preview.label ?? cron}</b>
+            <span>Ba lần kế tiếp: {preview.next.map((d) => dayAndClock(d)).join(' · ')}</span>
+          </>
+        )}
+      </div>
+      <div className="cron-ed__actions">
+        <button className="actbtn" onClick={onDone}>Hủy</button>
+        <button className="actbtn actbtn--run" disabled={saving || !preview?.valid || cron === task.cron} onClick={save}>
+          {saving ? 'Đang lưu…' : 'Lưu lịch'}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+export default function Schedule({
+  tasks,
+  now,
+  readOnly,
+  onChanged,
+  onToast,
+}: {
+  tasks: Task[]
+  now: Date
+  readOnly: boolean
+  onChanged: () => void
+  onToast: (m: string) => void
+}) {
+  const [editing, setEditing] = useState<string | null>(null)
+  const [pausing, setPausing] = useState<Record<string, boolean>>({})
+
+  async function togglePause(t: Task) {
+    const next = !(pausing[t.id] ?? t.paused)
+    setPausing((s) => ({ ...s, [t.id]: next }))
+    try {
+      await savePaused(t.id, next)
+      onToast(next ? `Đã tạm dừng "${t.name}"` : `"${t.name}" chạy lại theo lịch`)
+      onChanged()
+    } catch (e) {
+      setPausing((s) => ({ ...s, [t.id]: !next }))
+      onToast((e as Error).message)
+    }
+  }
   const today = (now.getDay() + 6) % 7
 
   return (
@@ -14,7 +93,7 @@ export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
       <header className="pagehead">
         <h1 className="sec">Lịch chạy</h1>
         <p className="sec__note">
-          Bảy ngày tới, từ {FROM}:00 đến {TO}:00, theo giờ Việt Nam. Task tạm dừng không hiện trên lưới.
+          Bảy ngày tới, từ {FROM}:00 đến {TO}:00, theo giờ Việt Nam.{readOnly ? '' : ' Bấm "Sửa lịch" để đổi giờ, công tắc để tạm dừng — Claude áp dụng ở lần Điều phối kế tiếp.'}
         </p>
       </header>
 
@@ -79,25 +158,48 @@ export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
       <h2 className="sec" style={{ fontSize: 21, margin: '44px 0 16px' }}>
         Từng lịch
       </h2>
-      {tasks.map((t) => (
-        <div key={t.id} className="job">
-          <span className="job__cron">{t.cron}</span>
-          <div style={{ minWidth: 0 }}>
-            <div className="job__n">{t.name}</div>
-            <div className="job__w">{t.scheduleLabel}</div>
-          </div>
-          <div className="job__r">
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: t.paused ? 'var(--fg-3)' : 'var(--needs)' }}>
-                {t.paused ? 'đã tạm dừng' : until(t.nextRun, now)}
+      {tasks.map((t) => {
+        const paused = pausing[t.id] ?? t.paused
+        return (
+          <Fragment key={t.id}>
+            <div className="job">
+              <span className="job__cron">{t.cron}</span>
+              <div style={{ minWidth: 0 }}>
+                <div className="job__n">
+                  {t.name}
+                  {!readOnly && (
+                    <button className="job__edit" onClick={() => setEditing(editing === t.id ? null : t.id)}>
+                      {editing === t.id ? 'Đóng' : 'Sửa lịch'}
+                    </button>
+                  )}
+                </div>
+                <div className="job__w">{t.scheduleLabel}</div>
               </div>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--fg-3)', marginTop: 2 }}>
-                {dayAndClock(t.nextRun)}
+              <div className="job__r">
+                <div style={{ textAlign: 'right' }}>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: paused ? 'var(--fg-3)' : 'var(--needs)' }}>
+                    {paused ? 'đã tạm dừng' : until(t.nextRun, now)}
+                  </div>
+                  <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--fg-3)', marginTop: 2 }}>
+                    {paused ? '—' : dayAndClock(t.nextRun)}
+                  </div>
+                </div>
+                {!readOnly && <Switch on={!paused} label={`Lịch chạy của ${t.name}`} onToggle={() => togglePause(t)} />}
               </div>
             </div>
-          </div>
-        </div>
-      ))}
+            {editing === t.id && (
+              <CronEditor
+                task={t}
+                onDone={() => {
+                  setEditing(null)
+                  onChanged()
+                }}
+                onToast={onToast}
+              />
+            )}
+          </Fragment>
+        )
+      })}
     </div>
   )
 }

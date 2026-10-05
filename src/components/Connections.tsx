@@ -1,5 +1,6 @@
 import { useState } from 'react'
-import type { ClaudeLink, Connection, MyConnections, Task } from '../lib/types'
+import type { ClaudeLink, Connection, Me, MyConnections, Task } from '../lib/types'
+import { WorkHoursEditor } from './WorkHours'
 import { ago } from '../lib/format'
 import { Lamp } from './Bits'
 import { SourceIcon } from './Icons'
@@ -78,11 +79,17 @@ export default function Connections({
   tasks,
   claude,
   onRevoke,
+  me,
+  onMeSaved,
+  onToast,
 }: {
   connections: Connection[]
   tasks: Task[]
   claude: MyConnections | null
   onRevoke: (id: string) => Promise<void>
+  me: Me | null
+  onMeSaved: (m: Me) => void
+  onToast: (m: string) => void
 }) {
   const name = (id: string) => tasks.find((t) => t.id === id)?.name ?? id
   const broken = connections.filter((c) => c.status === 'error' || c.status === 'warning')
@@ -99,6 +106,7 @@ export default function Connections({
       </header>
 
       {claude && <ClaudePanel claude={claude} onRevoke={onRevoke} />}
+      {me && <WorkHoursEditor me={me} onSaved={onMeSaved} onToast={onToast} />}
 
       <div className="conns">
         {connections.map((c, i) => (
