@@ -119,3 +119,12 @@ describe('listConnections / revokeConnection', () => {
     await expect(revokeConnection(db, a.id, 'abc', now)).rejects.toMatchObject({ code: 'not_found' })
   })
 })
+
+describe('refresh với resource sai', () => {
+  it('báo invalid_target mà không làm mất kết nối', async () => {
+    const u = await makeUser(db)
+    const t = await issue(u.id)
+    await expect(refreshTokens(db, { refreshToken: t.refresh_token, clientId: 'dcr_1', resource: 'https://khac.test/mcp' }, now)).rejects.toMatchObject({ error: 'invalid_target' })
+    await expect(refreshTokens(db, { refreshToken: t.refresh_token, clientId: 'dcr_1', resource: RES }, now)).resolves.toMatchObject({ token_type: 'Bearer' })
+  })
+})

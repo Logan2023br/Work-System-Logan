@@ -88,6 +88,10 @@ export async function exchangeCode(
 }
 
 export async function refreshTokens(db: Db, p: { refreshToken: string; clientId: string; resource?: string }, now: Date): Promise<TokenPair> {
+  if (p.resource) {
+    const hit = await db.query.oauthTokens.findFirst({ where: eq(oauthTokens.refreshHash, hashToken(p.refreshToken)), columns: { resource: true } })
+    if (hit && hit.resource !== p.resource.replace(/\/+$/, '')) throw new OAuthError('invalid_target', 'resource không khớp')
+  }
   const pair = newPair(now)
   // Xoay vòng nguyên tử: refresh cũ hết hiệu lực trong cùng câu lệnh phát cặp mới.
   const [row] = await db
@@ -103,7 +107,6 @@ export async function refreshTokens(db: Db, p: { refreshToken: string; clientId:
     )
     .returning()
   if (!row) throw grant('Refresh token không hợp lệ, đã dùng hoặc đã hết hạn')
-  if (p.resource && p.resource.replace(/\/+$/, '') !== row.resource) throw new OAuthError('invalid_target', 'resource không khớp')
   const owner = await db.query.users.findFirst({ where: eq(users.id, row.userId) })
   if (!owner?.active) {
     await db.update(oauthTokens).set({ revokedAt: now }).where(eq(oauthTokens.id, row.id))

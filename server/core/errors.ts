@@ -24,3 +24,9 @@ export const forbidden = (m = 'Bạn không có quyền làm việc này') => ne
 export const notFound = (m = 'Không tìm thấy') => new AppError('not_found', m)
 export const invalid = (m: string) => new AppError('invalid', m)
 export const conflict = (m: string) => new AppError('conflict', m)
+
+/** Lỗi unique của Postgres (23505), kể cả khi driver bọc trong `cause`. */
+export function isUniqueViolation(e: unknown): boolean {
+  const code = (x: unknown) => (typeof x === 'object' && x !== null && 'code' in x ? (x as { code: unknown }).code : undefined)
+  return code(e) === '23505' || code((e as { cause?: unknown } | null)?.cause) === '23505'
+}

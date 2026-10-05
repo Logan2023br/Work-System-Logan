@@ -4,10 +4,10 @@ import {
   LIMITS, byteSize, taskDefinitionSchema, zodMessage,
   type RunReport, type RunStatus, type TaskDefinition, type TaskPatch, type TaskState, type WeeklyReportInputOptionalWeek,
 } from '../../shared/schema.js'
-import { activity, commands, runs, tasks, weeklyReports } from '../db/schema.js'
+import { activity, commands, runs, tasks, users, weeklyReports } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { toTaskDTO, type CommandRow, type TaskRow } from './dto.js'
-import { conflict, invalid, notFound } from './errors.js'
+import { conflict, invalid, isUniqueViolation, notFound } from './errors.js'
 import { isValidCron, nextRunAfter } from './schedule.js'
 import { vnWeek } from './time.js'
 import type { User } from './users.js'
@@ -73,19 +73,25 @@ export async function createTask(db: Db, owner: User, input: TaskDefinition, now
     .select({ next: sql<number>`coalesce(max(${tasks.position}), -1) + 1` })
     .from(tasks)
     .where(eq(tasks.ownerId, owner.id))
-  const [row] = await db
-    .insert(tasks)
-    .values({
-      ...columnsOf(input),
-      slug: input.slug,
-      stateLabel: input.stateLabel || STATE_LABEL[input.state],
-      ownerId: owner.id,
-      position: Number(next),
-      nextRunAt: nextRunAfter(input.cron, now),
-      createdAt: now,
-      updatedAt: now,
-    })
-    .returning()
+  let row: TaskRow
+  try {
+    ;[row] = await db
+      .insert(tasks)
+      .values({
+        ...columnsOf(input),
+        slug: input.slug,
+        stateLabel: input.stateLabel || STATE_LABEL[input.state],
+        ownerId: owner.id,
+        position: Number(next),
+        nextRunAt: nextRunAfter(input.cron, now),
+        createdAt: now,
+        updatedAt: now,
+      })
+      .returning()
+  } catch (e) {
+    if (isUniqueViolation(e)) throw conflict(`Bạn đã có task "${input.slug}" — dùng sua_task để cập nhật`)
+    throw e
+  }
   await db.insert(activity).values({ ownerId: owner.id, taskId: row.id, at: now, level: 'ok', text: `Tạo task "${row.name}"` })
   return row
 }
@@ -135,15 +141,17 @@ export async function reportRun(
   let cmd: CommandRow | undefined
   if (input.leaseId) {
     const prior = await db.query.runs.findFirst({ where: eq(runs.leaseId, input.leaseId) })
-    if (prior) return { runId: prior.id, task: row, duplicate: true }
+    if (prior && prior.taskId === row.id) return { runId: prior.id, task: row, duplicate: true }
+    if (prior) throw invalid('leaseId này đã dùng cho một task khác — kiểm tra lại slug')
     cmd = await db.query.commands.findFirst({ where: and(eq(commands.leaseId, input.leaseId), eq(commands.ownerId, owner.id)) })
     if (cmd && cmd.taskId !== row.id) throw invalid('leaseId này thuộc một task khác — kiểm tra lại slug')
-    trigger = cmd ? 'command' : 'schedule'
+    trigger = cmd ? 'command' : row.leaseId === input.leaseId ? 'schedule' : 'manual'
   }
   const advancesSchedule = trigger !== 'command' || cmd?.actionId === 'run'
 
   const startedAt = input.durationMs !== undefined ? new Date(now.getTime() - input.durationMs) : now
   return db.transaction(async (tx) => {
+    await tx.select({ id: users.id }).from(users).where(eq(users.id, owner.id)).for('update')
     // Đọc lại task và KHÓA hàng trong transaction: mọi thay đổi xen giữa (tạm dừng, đổi lịch, báo cáo khác) đều được tính.
     const [cur] = await tx.select().from(tasks).where(eq(tasks.id, row.id)).for('update')
     const state = input.state ?? STATE_FROM_STATUS[input.status]

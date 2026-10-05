@@ -33,6 +33,7 @@ export interface ConsentView {
   userName: string
   userEmail: string
   clientName: string
+  clientHost: string | null
   redirectHost: string
   loopback: boolean
   hidden: Record<string, string>
@@ -46,6 +47,7 @@ export function renderConsent(v: ConsentView): string {
     'Cho phép kết nối',
     `<h1>${escapeHtml(v.clientName)} muốn nối vào Work System của bạn</h1>
 <div class="who">${escapeHtml(v.userName)} · ${escapeHtml(v.userEmail)}</div>
+${v.clientHost ? `<div class="who">Định danh ứng dụng: ${escapeHtml(v.clientHost)}</div>` : ''}
 <p>Khi cho phép, ứng dụng này sẽ thay bạn:</p>
 <ul><li>Đọc, tạo và cập nhật task của bạn</li><li>Ghi kết quả mỗi lần chạy và báo cáo tuần</li><li>Không đọc hay ghi được dữ liệu của người khác</li></ul>
 <p>Sau khi cho phép, bạn sẽ được đưa về:</p>

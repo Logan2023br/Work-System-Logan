@@ -185,7 +185,9 @@ describe('luồng đầy đủ', () => {
     const q = authorizeQuery(url, { redirect_uri: 'http://localhost:51234/callback' })
     const page = await app.request(`/oauth/authorize?${q}`, { headers: { cookie } })
     expect(page.status).toBe(200)
-    expect(await page.text()).toContain('máy của bạn')
+    const html = await page.text()
+    expect(html).toContain('máy của bạn')
+    expect(html).toContain('Định danh ứng dụng: claude.ai')
     const res = await approve(cookie, q)
     const code = new URL(res.headers.get('location')!).searchParams.get('code')!
     const t = await token({ grant_type: 'authorization_code', code, redirect_uri: 'http://localhost:51234/callback', client_id: url, code_verifier: verifier })

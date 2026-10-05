@@ -235,3 +235,37 @@ describe('reportRun đọc task bên trong transaction (chống ghi đè thay đ
     expect(task.nextRunAt).toBeNull()
   })
 })
+
+describe('reportRun — leaseId lạ hoặc của task khác', () => {
+  it('leaseId không khớp lệnh hay lease hiện tại → ghi như chạy tay', async () => {
+    const u = await makeUser(db)
+    await createTask(db, u, def(), now)
+    const { runId } = await reportRun(db, u, { slug: 'upsell', status: 'ok', note: '', log: [], leaseId: '6f1c2d3e-4b5a-4c6d-8e9f-0a1b2c3d4e5f' }, now)
+    const [run] = await db.select().from(runs).where(eq(runs.id, runId))
+    expect(run.trigger).toBe('manual')
+  })
+
+  it('leaseId đã dùng cho task khác → invalid, không bị coi là trùng', async () => {
+    const u = await makeUser(db)
+    await createTask(db, u, def(), now)
+    await createTask(db, u, def({ slug: 'khac' }), now)
+    const lease = '6f1c2d3e-4b5a-4c6d-8e9f-0a1b2c3d4e5f'
+    await reportRun(db, u, { slug: 'upsell', status: 'ok', note: '', log: [], leaseId: lease }, now)
+    await expect(reportRun(db, u, { slug: 'khac', status: 'ok', note: '', log: [], leaseId: lease }, now)).rejects.toMatchObject({ code: 'invalid' })
+  })
+})
+
+describe('createTask — đụng unique khi chạy song song', () => {
+  it('trả conflict thay vì lỗi máy chủ', async () => {
+    const u = await makeUser(db)
+    await createTask(db, u, def(), now)
+    // Giả lập yêu cầu thứ hai đã qua bước kiểm trùng trước khi yêu cầu đầu ghi xong.
+    const blind = new Proxy(db, {
+      get(target, prop, recv) {
+        if (prop === 'query') return { ...target.query, tasks: { findFirst: async () => undefined } }
+        return Reflect.get(target, prop, recv)
+      },
+    }) as Db
+    await expect(createTask(blind, u, def(), now)).rejects.toMatchObject({ code: 'conflict' })
+  })
+})

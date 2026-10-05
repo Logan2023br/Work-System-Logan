@@ -19,18 +19,17 @@ export async function createCommand(db: Db, owner: User, slug: string, input: Co
       : task.actions.find((a) => a.id === input.actionId)
   if (!action) throw invalid(`Task "${task.name}" không có nút "${input.actionId}"`)
 
-  const [{ n }] = await db
-    .select({ n: count() })
-    .from(commands)
-    .where(and(eq(commands.taskId, task.id), eq(commands.status, 'pending')))
-  if (n >= LIMITS.pendingCommandsPerTask) throw conflict(`Đã có ${LIMITS.pendingCommandsPerTask} lệnh đang chờ Claude cho task này`)
-
-  const [row] = await db
-    .insert(commands)
-    .values({ taskId: task.id, ownerId: owner.id, actionId: input.actionId, label: action.label, instructions: action.instructions, note: input.note || null, createdAt: now })
-    .returning()
-  await db.insert(activity).values({ ownerId: owner.id, taskId: task.id, at: now, level: 'wait', text: `Gửi lệnh "${action.label}" — chờ Claude nhận` })
-  return toCommandDTO(row)
+  return db.transaction(async (tx) => {
+    await tx.select({ id: tasks.id }).from(tasks).where(eq(tasks.id, task.id)).for('update')
+    const [{ n }] = await tx.select({ n: count() }).from(commands).where(and(eq(commands.taskId, task.id), eq(commands.status, 'pending')))
+    if (n >= LIMITS.pendingCommandsPerTask) throw conflict(`Đã có ${LIMITS.pendingCommandsPerTask} lệnh đang chờ Claude cho task này`)
+    const [row] = await tx
+      .insert(commands)
+      .values({ taskId: task.id, ownerId: owner.id, actionId: input.actionId, label: action.label, instructions: action.instructions, note: input.note || null, createdAt: now })
+      .returning()
+    await tx.insert(activity).values({ ownerId: owner.id, taskId: task.id, at: now, level: 'wait', text: `Gửi lệnh "${action.label}" — chờ Claude nhận` })
+    return toCommandDTO(row)
+  })
 }
 
 export async function cancelCommand(db: Db, owner: User, id: string, now: Date): Promise<void> {
@@ -64,6 +63,7 @@ export async function setSchedule(db: Db, owner: User, slug: string, input: Sche
 
 export async function setPaused(db: Db, owner: User, slug: string, paused: boolean, now: Date): Promise<TaskRow> {
   const task = await findOwnTask(db, owner, slug)
+  if (task.paused === paused) return task
   const [row] = await db
     .update(tasks)
     .set({ paused, nextRunAt: paused ? null : nextRunAfter(task.cron, now), updatedAt: now })

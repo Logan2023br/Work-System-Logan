@@ -107,3 +107,14 @@ describe('setWorkHours / previewSchedule', () => {
     expect(previewSchedule('x', now)).toEqual({ valid: false, label: null, next: [] })
   })
 })
+
+describe('setPaused không đổi trạng thái', () => {
+  it('bỏ tạm dừng một task vốn đang chạy → giữ nguyên lần chạy (không mất lần chạy bù)', async () => {
+    const u = await makeUser(db)
+    const overdue = new Date('2026-10-05T02:00:00Z')
+    await makeTask(db, u.id, { slug: 'a', nextRunAt: overdue })
+    const t = await setPaused(db, u, 'a', false, now)
+    expect(t.nextRunAt?.toISOString()).toBe(overdue.toISOString())
+    expect(await db.select().from(activity)).toEqual([])
+  })
+})

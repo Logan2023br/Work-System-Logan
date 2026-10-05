@@ -105,6 +105,7 @@ export function oauthRoutes(deps: AppDeps) {
     return c.html(
       renderConsent({
         userName: user.name, userEmail: user.email, clientName: check.client.name,
+        clientHost: check.client.kind === 'cimd' ? new URL(check.client.clientId).host : null,
         redirectHost: target.host, loopback: isLoopback(target), hidden: params,
       }),
       200,
