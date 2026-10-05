@@ -3,20 +3,13 @@ import { activity, commands, runs, weeklyReports } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { makeTask, makeUser, resetDb, testDb } from '../test/db.js'
 import { formatDuration, primaryAction } from './dto.js'
-import { getWorkspace, listPeople, presenceOf } from './workspace.js'
+import { getWorkspace, listPeople } from './workspace.js'
 
 const now = new Date('2026-10-05T03:00:00Z')
 let db: Db
 beforeAll(async () => { db = await testDb() })
 beforeEach(async () => { await resetDb(db) })
 
-describe('presenceOf', () => {
-  it('online trong 30 phút, offline sau đó, never khi chưa nối', () => {
-    expect(presenceOf(new Date(now.getTime() - 29 * 60_000), now)).toBe('online')
-    expect(presenceOf(new Date(now.getTime() - 31 * 60_000), now)).toBe('offline')
-    expect(presenceOf(null, now)).toBe('never')
-  })
-})
 
 describe('formatDuration', () => {
   it.each([[null, '—'], [38_000, '38s'], [278_000, '4p 38s'], [3_720_000, '62p 0s']])('%s → %s', (ms, s) =>

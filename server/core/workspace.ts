@@ -1,22 +1,18 @@
 import { asc, desc, eq } from 'drizzle-orm'
-import type { PersonDTO, Presence, ReflectDTO, WorkspaceDTO } from '../../shared/dto.js'
+import type { PersonDTO, ReflectDTO, WorkspaceDTO } from '../../shared/dto.js'
 import { TASK_STATES, type TaskState } from '../../shared/schema.js'
 import { activity, commands, runs, tasks, users, weeklyReports } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { deriveConnections, toTaskDTO, type TaskRow } from './dto.js'
 import { notFound } from './errors.js'
 import { vnWeek } from './time.js'
+import { nextDispatchAt, presenceOf } from './presence.js'
 import { isUuid } from './tokens.js'
 import type { User } from './users.js'
 
-export const ONLINE_WINDOW_MS = 30 * 60_000
 const RECENT = 10
 const ACTIVITY_LIMIT = 30
 
-export function presenceOf(lastSeenAt: Date | null, now: Date): Presence {
-  if (!lastSeenAt) return 'never'
-  return now.getTime() - lastSeenAt.getTime() <= ONLINE_WINDOW_MS ? 'online' : 'offline'
-}
 
 const ATTENTION_RANK: Record<TaskState, number> = { blocked: 0, 'needs-you': 1, running: 9, healthy: 9, idle: 9 }
 
@@ -32,8 +28,9 @@ function toPerson(u: User, own: Pick<TaskRow, 'slug' | 'name' | 'state' | 'state
     avatarUrl: u.avatarUrl,
     team: u.team,
     active: u.active,
-    presence: presenceOf(u.lastSeenAt, now),
+    presence: presenceOf(u, now),
     lastSeenAt: u.lastSeenAt?.toISOString() ?? null,
+    nextDispatchAt: nextDispatchAt(u, now)?.toISOString() ?? null,
     taskCount: own.length,
     counts,
     health: own.length ? own.reduce((s, t) => s + t.health, 0) / own.length : null,

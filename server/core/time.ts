@@ -39,3 +39,9 @@ export function vnWeek(now: Date): WeekDTO {
 
   return { key: `${isoYear}-W${pad(number)}`, number, label: `Tuần ${number}`, from: ymd(monday), to: ymd(sunday), range }
 }
+
+/** Thứ (0 = CN) và số phút trong ngày theo giờ VN. */
+export function vnClock(d: Date): { dow: number; minutes: number } {
+  const v = new Date(d.getTime() + OFFSET)
+  return { dow: v.getUTCDay(), minutes: v.getUTCHours() * 60 + v.getUTCMinutes() }
+}
