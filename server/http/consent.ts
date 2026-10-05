@@ -52,7 +52,7 @@ export function renderConsent(v: ConsentView): string {
 <div class="host">${escapeHtml(v.redirectHost)}</div>
 ${v.loopback ? '<div class="warn">Ứng dụng này chạy trên máy của bạn (localhost). Chỉ cho phép nếu bạn vừa bấm kết nối từ Claude Code.</div>' : ''}
 <form method="post" action="/oauth/authorize">${inputs}
-<div class="row"><button class="deny" name="decision" value="deny">Từ chối</button><button class="allow" name="decision" value="allow" autofocus>Cho phép</button></div>
+<div class="row"><button class="deny" name="decision" value="deny">Từ chối</button><button class="allow" name="decision" value="allow">Cho phép</button></div>
 </form>
 <p style="margin:16px 0 0;font-size:12.5px">Bạn có thể ngắt kết nối bất cứ lúc nào ở mục Kết nối trên Work System.</p>`,
   )

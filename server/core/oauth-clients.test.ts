@@ -15,6 +15,10 @@ describe('redirect', () => {
     ['http://localhost:3118/callback', true],
     ['http://127.0.0.1/callback', true],
     ['http://evil.com/cb', false],
+    ['https://claude.com/api/mcp/auth_callback', true],
+    ['https://evil.example/cb', false],
+    ['https://evil.example', false],
+    ['https://claude.ai/api/mcp/auth_callback?x=1', false],
     ['https://claude.ai/cb#x', false],
     ['javascript:alert(1)', false],
     ['không phải url', false],
@@ -44,8 +48,9 @@ describe('registerClient (DCR)', () => {
     expect(c).toMatchObject({ kind: 'dcr', name: 'Claude' })
   })
 
-  it('từ chối redirect không an toàn', async () => {
+  it('từ chối redirect không an toàn hoặc không phải của Claude (chống giả danh, open redirect)', async () => {
     await expect(registerClient(db, { redirect_uris: ['http://evil.com/cb'] }, now)).rejects.toMatchObject({ error: 'invalid_redirect_uri' })
+    await expect(registerClient(db, { client_name: 'Claude', redirect_uris: ['https://evil.example/cb'] }, now)).rejects.toMatchObject({ error: 'invalid_redirect_uri' })
   })
 
   it('từ chối thân sai dạng', async () => {
@@ -72,8 +77,9 @@ describe('resolveClient (CIMD)', () => {
     expect(await resolveClient(db, url, async () => ({ ...doc, client_id: 'https://evil.com/x' }), now)).toBeNull()
   })
 
-  it('tài liệu có redirect không an toàn → null', async () => {
+  it('tài liệu có redirect không an toàn hoặc https lạ → null', async () => {
     expect(await resolveClient(db, url, async () => ({ ...doc, redirect_uris: ['http://evil.com/cb'] }), now)).toBeNull()
+    expect(await resolveClient(db, url, async () => ({ ...doc, redirect_uris: ['https://evil.example/cb'] }), now)).toBeNull()
   })
 
   it('URL không hợp lệ cho CIMD (http, IP, localhost, không có path) → null mà không tải', async () => {

@@ -6,6 +6,8 @@ import { OAuthError } from './oauth-error.js'
 import { newToken } from './tokens.js'
 
 export const CLAUDE_CALLBACK = 'https://claude.ai/api/mcp/auth_callback'
+/** Work System chỉ phục vụ Claude: redirect https chỉ được là callback của Claude (tài liệu connector của Anthropic). */
+export const ALLOWED_HTTPS_REDIRECTS = [CLAUDE_CALLBACK, 'https://claude.com/api/mcp/auth_callback']
 export const CIMD_TTL_MS = 24 * 3_600_000
 
 export interface ClientInfo {
@@ -29,7 +31,8 @@ export function isAcceptableRedirect(raw: string): boolean {
     return false
   }
   if (u.hash || u.username || u.password) return false
-  return u.protocol === 'https:' || isLoopback(u)
+  // Loopback (Claude Code, MCP Inspector trên máy người dùng) được phép; https chỉ nhận đúng callback của Claude.
+  return isLoopback(u) || ALLOWED_HTTPS_REDIRECTS.includes(raw)
 }
 
 /** Khớp chính xác; riêng loopback (RFC 8252 §7.3) bỏ qua cổng. */

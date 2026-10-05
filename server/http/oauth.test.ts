@@ -96,6 +96,7 @@ describe('authorize', () => {
     expect(html).toContain('claude.ai')
     expect(html).toContain('name="decision"')
     expect(res.headers.get('x-frame-options')).toBe('DENY')
+    expect(html).not.toContain('autofocus')
   })
 
   it('redirect_uri không thuộc client → trang lỗi 400, không redirect', async () => {
