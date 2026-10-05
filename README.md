@@ -15,7 +15,7 @@ npm run dev               # http://localhost:5173
 
 Đăng nhập nhanh khi dev: `http://localhost:5173/auth/dev?email=tutnv@bravebits.vn&name=Logan`
 
-Test: `npm test` · Kiểm tra kiểu: `npm run typecheck`
+Test: `npm test` · E2E (Playwright): `npm run e2e` · Kiểm tra kiểu: `npm run typecheck`
 
 ## Triển khai (Vercel)
 
@@ -25,22 +25,28 @@ Test: `npm test` · Kiểm tra kiểu: `npm run typecheck`
 2. **Vercel project:** import repo; Framework = Vite.
 3. **Database:** tab *Storage* → *Create Database* → Neon Postgres (Free) → *Connect* vào project. Vercel tự thêm `DATABASE_URL`.
 4. **Biến môi trường (Production + Preview):**
-   `PUBLIC_URL=https://<domain>` · `ALLOWED_DOMAIN=bravebits.vn` · `ADMIN_EMAILS=tutnv@bravebits.vn` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET`. **Không** đặt `DEV_LOGIN`.
+   `PUBLIC_URL=https://<domain>` · `ALLOWED_DOMAIN=bravebits.vn` · `ADMIN_EMAILS=tutnv@bravebits.vn` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET` · `CRON_SECRET` (chuỗi ngẫu nhiên dài — Vercel Cron gọi `/api/cron/cleanup` lúc 03:00 giờ VN mỗi ngày để dọn log > 30 ngày, phiên và token hết hạn). **Không** đặt `DEV_LOGIN`.
 5. **Deploy:** push lên nhánh chính. Lệnh `vercel-build` tự chạy migration (chỉ trên bản production, bản preview bỏ qua) rồi build.
 6. **Nạp dữ liệu mẫu (một lần):** `DATABASE_URL=<chuỗi Neon> npm run seed`.
 
 ## Nối Claude desktop
 
-Claude nối vào Work System qua máy chủ của Anthropic, nên app phải có **địa chỉ HTTPS công khai** (bản Vercel). `localhost` không dùng được cho connector.
+Trên Work System (bản Vercel) mở mục **Nối Claude** — 4 bước, tự đánh dấu khi xong:
 
-1. Trên Work System (bản Vercel) → mục **Kết nối** → chép địa chỉ connector (`https://<domain>/mcp`).
-2. Claude desktop → **Settings → Connectors → Add custom connector** → dán địa chỉ → **Connect**.
-3. Trình duyệt mở trang đăng nhập Google → màn hình "Claude muốn nối vào Work System của bạn" → **Cho phép**.
-4. Trong một cuộc trò chuyện mới: "Dùng Work System, xem task của tôi" — Claude gọi `xem_task`.
+1. Thêm connector `https://<domain>/mcp` (Settings → Connectors → Add custom connector).
+2. Cài bộ skill: `dieu-phoi`, `tao-task`, `bao-cao-tuan` (tải zip ngay trên trang).
+3. Tạo tác vụ hẹn giờ local "dieu-phoi" trong tab Code (câu lệnh mẫu có sẵn, lịch theo khung giờ của từng người), **Run now** một lần và **Always allow**.
+4. Nhờ Claude "Dùng skill tao-task để tạo task mới".
 
-Kiểm tra máy chủ MCP không cần Claude: `npx @modelcontextprotocol/inspector` → Transport *Streamable HTTP* → URL `https://<domain>/mcp` → *Connect* (đi qua đúng luồng OAuth).
+Claude chỉ gọi tới được địa chỉ HTTPS công khai — `localhost` không dùng cho connector.
 
-Ngắt kết nối: mục **Kết nối** → **Ngắt kết nối** (bấm hai lần). Admin vô hiệu hóa một người cũng ngắt mọi kết nối Claude của người đó.
+## Danh sách kiểm tra trước khi mời team
+
+- [ ] Tạo **Client Secret mới** cho Google OAuth (secret cũ từng được dán vào chat) và chỉ đặt trong biến môi trường Vercel.
+- [ ] Vercel: gói Pro cho mục đích công ty (Hobby là phi thương mại); `PUBLIC_URL`, `ADMIN_EMAILS`, `CRON_SECRET` đã đặt; **không** đặt `DEV_LOGIN`.
+- [ ] Google OAuth: redirect `https://<domain>/auth/google/callback`; Audience = Internal (nếu project thuộc Workspace bravebits.vn).
+- [ ] Logan nối Claude desktop, chạy Điều phối ≥ 1 ngày làm việc: vé lệnh đi hết vòng, báo cáo tuần nộp được.
+- [ ] Mời team: gửi link Work System, mọi người làm 4 bước ở mục **Nối Claude**.
 
 ## Cấu trúc
 
