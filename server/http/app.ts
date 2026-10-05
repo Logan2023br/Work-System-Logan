@@ -10,6 +10,7 @@ import { apiRoutes } from './api.js'
 import { authRoutes } from './auth.js'
 import type { MetadataFetcher } from '../core/oauth-clients.js'
 import { oauthRoutes } from './oauth.js'
+import { cleanup } from '../core/cleanup.js'
 import { mcpHandler } from './mcp.js'
 import type { GoogleAuth } from './google.js'
 
@@ -69,6 +70,12 @@ export function createApp(deps: AppDeps) {
     return c.json({ error: 'internal', message: 'Máy chủ gặp lỗi, thử lại sau ít phút' }, 500)
   })
   app.notFound((c) => c.json({ error: 'not_found', message: 'Không có đường dẫn này' }, 404))
+  // Vercel Cron gửi "Authorization: Bearer <CRON_SECRET>". Không cần phiên đăng nhập.
+  app.get('/api/cron/cleanup', async (c) => {
+    const secret = deps.config.cronSecret
+    if (!secret || c.req.header('authorization') !== `Bearer ${secret}`) return c.json({ error: 'forbidden', message: 'Sai hoặc thiếu CRON_SECRET' }, 403)
+    return c.json(await cleanup(deps.db, deps.now()))
+  })
   app.route('/', oauthRoutes(deps))
   const mcp = mcpHandler(deps)
   app.all('/mcp', (c) => mcp(c.req.raw))

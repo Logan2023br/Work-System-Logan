@@ -6,6 +6,7 @@ export interface Config {
   googleClientSecret: string
   secureCookies: boolean
   devLogin: boolean
+  cronSecret?: string | null
 }
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -29,5 +30,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     secureCookies: publicUrl.startsWith('https://'),
     // Đăng nhập không cần Google, CHỈ cho máy local qua http — không thể bật trên production (https).
     devLogin: isLocal && env.DEV_LOGIN === '1',
+    cronSecret: env.CRON_SECRET || null,
   }
 }
