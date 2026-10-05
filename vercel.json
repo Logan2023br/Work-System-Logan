@@ -28,7 +28,7 @@
       "destination": "/api/router?__p=/.well-known/:path*"
     },
     {
-      "source": "/((?!assets/|favicon\\.svg|icons\\.svg).*)",
+      "source": "/((?!assets/|downloads/|favicon\\.svg|icons\\.svg).*)",
       "destination": "/index.html"
     }
   ],
