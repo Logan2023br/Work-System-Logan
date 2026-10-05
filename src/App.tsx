@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Me, Person, Task, Workspace } from './lib/types'
+import type { Me, MyConnections, Person, Task, Workspace } from './lib/types'
 import { ApiError } from './lib/api'
-import { loadMe, loadPeople, loadWorkspace, logout } from './lib/data'
+import { loadMe, loadMyConnections, loadPeople, loadWorkspace, logout, revokeLink } from './lib/data'
 import { usePoll } from './lib/usePoll'
 import { clock } from './lib/format'
 import Desk from './components/Desk'
@@ -51,6 +51,7 @@ function Shell({ me }: { me: Me }) {
   const [viewing, setViewing] = useState<string>(me.id)
   const [ws, setWs] = useState<Workspace | null>(null)
   const [people, setPeople] = useState<Person[]>([])
+  const [claude, setClaude] = useState<MyConnections | null>(null)
   const [err, setErr] = useState<string | null>(null)
   const [openTask, setOpenTask] = useState<string | null>(null)
   const [booted, setBooted] = useState(false)
@@ -58,17 +59,18 @@ function Shell({ me }: { me: Me }) {
   const [toast, setToast] = useState<string | null>(null)
 
   const refresh = useCallback(() => {
-    Promise.all([loadWorkspace(viewing), loadPeople()])
-      .then(([w, p]) => {
+    Promise.all([loadWorkspace(viewing), loadPeople(), viewing === me.id ? loadMyConnections() : Promise.resolve(null)])
+      .then(([w, p, cl]) => {
         setWs(w)
         setPeople(p)
+        setClaude(cl)
         setErr(null)
       })
       .catch((e: unknown) => {
         if (e instanceof ApiError && e.status === 401) window.location.href = '/login'
         else setErr((e as Error).message)
       })
-  }, [viewing])
+  }, [viewing, me.id])
 
   useEffect(() => {
     setWs(null)
@@ -106,6 +108,11 @@ function Shell({ me }: { me: Me }) {
   async function signOut() {
     await logout().catch(() => undefined)
     window.location.href = '/login'
+  }
+  async function revoke(id: string) {
+    await revokeLink(id)
+    setToast('Đã ngắt kết nối Claude')
+    refresh()
   }
   function fire(t: Task) {
     setToast(`${t.action.label} · ${t.name}`)
@@ -189,7 +196,7 @@ function Shell({ me }: { me: Me }) {
             ) : view === 'schedule' ? (
               <Schedule tasks={ws.tasks} now={now} />
             ) : view === 'connections' ? (
-              <Connections connections={ws.connections} tasks={ws.tasks} />
+              <Connections connections={ws.connections} tasks={ws.tasks} claude={ws.isMine ? claude : null} onRevoke={revoke} />
             ) : (
               <Reflect reflect={ws.reflect} tasks={ws.tasks} />
             )}

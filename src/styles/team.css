@@ -267,3 +267,61 @@ button.rail__mark:active { transform: translateY(1px); }
 
 /* sparkline chưa đủ dữ liệu: một đường kẻ mờ thay cho biểu đồ */
 .spark--empty { height: 30px; border-bottom: 1px dashed var(--line); opacity: .7; }
+
+/* ---------- Claude của bạn ---------- */
+.claude {
+  margin: 0 0 30px;
+  padding: 22px 22px 18px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, var(--ink-raised), var(--ink));
+  border: 1px solid var(--line);
+}
+.claude__head { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+.claude__title { font-family: var(--display); font-size: 20px; font-weight: 650; margin: 0; letter-spacing: -.01em; }
+.claude__lede { color: var(--fg-2); font-size: 14px; margin: 0 0 14px; max-width: 70ch; }
+.claude__lede b { color: var(--fg); font-weight: 600; }
+.claude__url {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 6px 6px 14px;
+  border-radius: 11px;
+  background: var(--ink-sunken);
+  border: 1px solid var(--line-soft);
+}
+.claude__url code { flex: 1; min-width: 0; font-family: var(--mono); font-size: 13.5px; color: var(--needs); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.claude__url button {
+  height: 32px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-size: 13px;
+  transition: border-color .2s var(--ease), background .2s var(--ease);
+}
+.claude__url button:hover { border-color: var(--needs); background: var(--needs-dim); }
+.claude__links { list-style: none; margin: 16px 0 0; padding: 0; }
+.claude__links li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-top: 1px solid var(--line-soft);
+}
+.claude__name { font-weight: 600; }
+.claude__meta { color: var(--fg-3); font-size: 12.5px; font-family: var(--mono); margin-top: 2px; }
+.claude__revoke {
+  flex: none;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  color: var(--fg-2);
+  font-size: 13px;
+  transition: all .2s var(--ease);
+}
+.claude__revoke:hover { color: var(--bad); border-color: rgba(255, 92, 77, .45); }
+.claude__revoke--armed { color: var(--bad); border-color: var(--bad); background: var(--bad-dim); }
+@media (max-width: 720px) {
+  .claude__links li { flex-direction: column; align-items: flex-start; }
+}

@@ -1,6 +1,8 @@
 import { Hono } from 'hono'
 import { deactivateUser, toMeDTO } from '../core/users.js'
 import { getWorkspace, listPeople } from '../core/workspace.js'
+import { listConnections, revokeConnection } from '../core/oauth-tokens.js'
+import { mcpResource } from './oauth.js'
 import { requireUser, sameOrigin, type AppDeps, type AppEnv } from './app.js'
 
 export function apiRoutes(deps: AppDeps) {
@@ -20,6 +22,15 @@ export function apiRoutes(deps: AppDeps) {
 
   r.post('/admin/users/:id/deactivate', async (c) => {
     await deactivateUser(deps.db, c.get('user'), c.req.param('id'), deps.now())
+    return c.json({ ok: true })
+  })
+
+  r.get('/connections', async (c) =>
+    c.json({ connectorUrl: mcpResource(deps.config), links: await listConnections(deps.db, c.get('user').id, deps.now()) }),
+  )
+
+  r.post('/connections/:id/revoke', async (c) => {
+    await revokeConnection(deps.db, c.get('user').id, c.req.param('id'), deps.now())
     return c.json({ ok: true })
   })
 
