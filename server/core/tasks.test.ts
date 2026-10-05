@@ -137,3 +137,79 @@ describe('submitWeeklyReport', () => {
     expect(rows[0].summary).toBe('v2')
   })
 })
+import { commands } from '../db/schema.js'
+import { dispatch } from './dispatch.js'
+
+describe('reportRun với leaseId', () => {
+  const past = new Date(now.getTime() - 60_000)
+
+  it('lần chạy theo lịch: trigger schedule, xóa lease, đẩy lịch', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    await db.update(tasks).set({ nextRunAt: past }).where(eq(tasks.id, t.id))
+    const [item] = await dispatch(db, u, now)
+    const r = await reportRun(db, u, { slug: 'upsell', status: 'ok', note: '', log: [], leaseId: item.leaseId }, now)
+    expect(r.duplicate).toBe(false)
+    expect(r.task.leaseId).toBeNull()
+    expect(r.task.nextRunAt?.toISOString()).toBe('2026-10-05T08:30:00.000Z')
+    const [run] = await db.select().from(runs).where(eq(runs.id, r.runId))
+    expect(run).toMatchObject({ trigger: 'schedule', leaseId: item.leaseId })
+  })
+
+  it('gửi lại cùng leaseId → không tạo run thứ hai', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    await db.update(tasks).set({ nextRunAt: past }).where(eq(tasks.id, t.id))
+    const [item] = await dispatch(db, u, now)
+    const p = { slug: 'upsell', status: 'ok' as const, note: '', log: [], leaseId: item.leaseId }
+    const a = await reportRun(db, u, p, now)
+    const b = await reportRun(db, u, p, now)
+    expect(b).toMatchObject({ duplicate: true, runId: a.runId })
+    expect(await db.select().from(runs)).toHaveLength(1)
+  })
+
+  it('lệnh "Duyệt": trigger command, đóng lệnh, KHÔNG đẩy lịch', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    const [c] = await db.insert(commands).values({ taskId: t.id, ownerId: u.id, actionId: 'duyet', label: 'Duyệt', instructions: 'x' }).returning()
+    const [item] = await dispatch(db, u, now)
+    const r = await reportRun(db, u, { slug: 'upsell', status: 'partial', note: 'Duyệt 2/3', log: [], leaseId: item.leaseId }, now)
+    expect(r.task.lastRunAt).toBeNull()
+    expect(r.task.nextRunAt?.toISOString()).toBe(t.nextRunAt?.toISOString())
+    const [closed] = await db.select().from(commands).where(eq(commands.id, c.id))
+    expect(closed).toMatchObject({ status: 'done', result: 'Duyệt 2/3' })
+    const [run] = await db.select().from(runs).where(eq(runs.id, r.runId))
+    expect(run).toMatchObject({ trigger: 'command', commandId: c.id })
+  })
+
+  it('lệnh "Chạy ngay" thất bại: lệnh failed, task bị đẩy lịch và mở lease', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    const [c] = await db.insert(commands).values({ taskId: t.id, ownerId: u.id, actionId: 'run', label: 'Chạy ngay', instructions: 'x' }).returning()
+    const [item] = await dispatch(db, u, now)
+    const r = await reportRun(db, u, { slug: 'upsell', status: 'failed', note: '', log: [], leaseId: item.leaseId }, now)
+    expect(r.task.lastRunAt?.toISOString()).toBe(now.toISOString())
+    expect(r.task.leaseId).toBeNull()
+    const [closed] = await db.select().from(commands).where(eq(commands.id, c.id))
+    expect(closed).toMatchObject({ status: 'failed', result: 'Chạy thất bại' })
+  })
+
+  it('báo muộn cho lệnh đã expired vẫn đóng được', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    const [c] = await db.insert(commands).values({ taskId: t.id, ownerId: u.id, actionId: 'duyet', label: 'Duyệt', instructions: 'x' }).returning()
+    const [item] = await dispatch(db, u, now)
+    await db.update(commands).set({ status: 'expired' }).where(eq(commands.id, c.id))
+    await reportRun(db, u, { slug: 'upsell', status: 'ok', note: '', log: [], leaseId: item.leaseId }, now)
+    expect((await db.select().from(commands).where(eq(commands.id, c.id)))[0].status).toBe('done')
+  })
+
+  it('lease của lệnh thuộc task khác slug → invalid', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    await createTask(db, u, def({ slug: 'khac' }), now)
+    await db.insert(commands).values({ taskId: t.id, ownerId: u.id, actionId: 'duyet', label: 'Duyệt', instructions: 'x' })
+    const [item] = await dispatch(db, u, now)
+    await expect(reportRun(db, u, { slug: 'khac', status: 'ok', note: '', log: [], leaseId: item.leaseId }, now)).rejects.toMatchObject({ code: 'invalid' })
+  })
+})

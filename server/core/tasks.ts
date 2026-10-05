@@ -6,7 +6,7 @@ import {
 } from '../../shared/schema.js'
 import { activity, commands, runs, tasks, weeklyReports } from '../db/schema.js'
 import type { Db } from '../db/types.js'
-import { toTaskDTO, type TaskRow } from './dto.js'
+import { toTaskDTO, type CommandRow, type TaskRow } from './dto.js'
 import { conflict, invalid, notFound } from './errors.js'
 import { isValidCron, nextRunAfter } from './schedule.js'
 import { vnWeek } from './time.js'
@@ -35,11 +35,11 @@ export interface MyTaskSummary {
   nextRun: string | null
 }
 
-function assertCron(cron: string) {
+export function assertCron(cron: string) {
   if (!isValidCron(cron)) throw invalid(`Cron "${cron}" không hợp lệ — cần đúng 5 trường theo giờ Việt Nam, ví dụ "0 9 * * 1-5"`)
 }
 
-async function findOwnTask(db: Db, owner: User, slug: string): Promise<TaskRow> {
+export async function findOwnTask(db: Db, owner: User, slug: string): Promise<TaskRow> {
   const t = await db.query.tasks.findFirst({ where: and(eq(tasks.ownerId, owner.id), eq(tasks.slug, slug)) })
   if (!t) throw notFound(`Bạn không có task "${slug}". Gọi xem_task để xem danh sách slug.`)
   return t
@@ -123,8 +123,25 @@ export async function getMyTask(db: Db, owner: User, slug: string): Promise<Task
   return toTaskDTO(row, row.position, r, c)
 }
 
-export async function reportRun(db: Db, owner: User, input: RunReport, now: Date): Promise<{ runId: string; task: TaskRow }> {
+export async function reportRun(
+  db: Db,
+  owner: User,
+  input: RunReport,
+  now: Date,
+): Promise<{ runId: string; task: TaskRow; duplicate: boolean }> {
   const row = await findOwnTask(db, owner, input.slug)
+
+  let trigger: 'manual' | 'schedule' | 'command' = 'manual'
+  let cmd: CommandRow | undefined
+  if (input.leaseId) {
+    const prior = await db.query.runs.findFirst({ where: eq(runs.leaseId, input.leaseId) })
+    if (prior) return { runId: prior.id, task: row, duplicate: true }
+    cmd = await db.query.commands.findFirst({ where: and(eq(commands.leaseId, input.leaseId), eq(commands.ownerId, owner.id)) })
+    if (cmd && cmd.taskId !== row.id) throw invalid('leaseId này thuộc một task khác — kiểm tra lại slug')
+    trigger = cmd ? 'command' : 'schedule'
+  }
+  const advancesSchedule = trigger !== 'command' || cmd?.actionId === 'run'
+
   const state = input.state ?? STATE_FROM_STATUS[input.status]
   const updates = {
     state,
@@ -143,15 +160,34 @@ export async function reportRun(db: Db, owner: User, input: RunReport, now: Date
   return db.transaction(async (tx) => {
     const [run] = await tx
       .insert(runs)
-      .values({ taskId: row.id, trigger: 'manual', status: input.status, startedAt, finishedAt: now, durationMs: input.durationMs ?? null, note: input.note, log: input.log })
+      .values({
+        taskId: row.id, trigger, status: input.status, startedAt, finishedAt: now, durationMs: input.durationMs ?? null,
+        note: input.note, log: input.log, leaseId: input.leaseId ?? null, commandId: cmd?.id ?? null,
+      })
+      .onConflictDoNothing({ target: runs.leaseId })
       .returning({ id: runs.id })
+    if (!run) {
+      const prior = await tx.query.runs.findFirst({ where: eq(runs.leaseId, input.leaseId!) })
+      return { runId: prior!.id, task: row, duplicate: true }
+    }
+
+    const schedule = advancesSchedule ? { lastRunAt: now, nextRunAt: row.paused ? row.nextRunAt : nextRunAfter(row.cron, now) } : {}
+    const release = input.leaseId && row.leaseId === input.leaseId ? { leaseId: null, leaseUntil: null } : {}
     const [task] = await tx
       .update(tasks)
-      .set({ ...updates, lastRunAt: now, nextRunAt: row.paused ? row.nextRunAt : nextRunAfter(row.cron, now), updatedAt: now })
+      .set({ ...updates, ...schedule, ...release, updatedAt: now })
       .where(eq(tasks.id, row.id))
       .returning()
-    await tx.insert(activity).values({ ownerId: owner.id, taskId: row.id, at: now, level: LEVEL_FROM_STATUS[input.status], text: input.note || TEXT_FROM_STATUS[input.status] })
-    return { runId: run.id, task }
+
+    if (cmd) {
+      await tx
+        .update(commands)
+        .set({ status: input.status === 'failed' ? 'failed' : 'done', result: input.note || TEXT_FROM_STATUS[input.status], finishedAt: now })
+        .where(eq(commands.id, cmd.id))
+    }
+    const text = cmd ? `${cmd.label}: ${input.note || TEXT_FROM_STATUS[input.status]}` : input.note || TEXT_FROM_STATUS[input.status]
+    await tx.insert(activity).values({ ownerId: owner.id, taskId: row.id, at: now, level: LEVEL_FROM_STATUS[input.status], text })
+    return { runId: run.id, task, duplicate: false }
   })
 }
 
