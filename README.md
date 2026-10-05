@@ -29,6 +29,19 @@ Test: `npm test` · Kiểm tra kiểu: `npm run typecheck`
 5. **Deploy:** push lên nhánh chính. Lệnh `vercel-build` tự chạy migration (chỉ trên bản production, bản preview bỏ qua) rồi build.
 6. **Nạp dữ liệu mẫu (một lần):** `DATABASE_URL=<chuỗi Neon> npm run seed`.
 
+## Nối Claude desktop
+
+Claude nối vào Work System qua máy chủ của Anthropic, nên app phải có **địa chỉ HTTPS công khai** (bản Vercel). `localhost` không dùng được cho connector.
+
+1. Trên Work System (bản Vercel) → mục **Kết nối** → chép địa chỉ connector (`https://<domain>/mcp`).
+2. Claude desktop → **Settings → Connectors → Add custom connector** → dán địa chỉ → **Connect**.
+3. Trình duyệt mở trang đăng nhập Google → màn hình "Claude muốn nối vào Work System của bạn" → **Cho phép**.
+4. Trong một cuộc trò chuyện mới: "Dùng Work System, xem task của tôi" — Claude gọi `xem_task`.
+
+Kiểm tra máy chủ MCP không cần Claude: `npx @modelcontextprotocol/inspector` → Transport *Streamable HTTP* → URL `https://<domain>/mcp` → *Connect* (đi qua đúng luồng OAuth).
+
+Ngắt kết nối: mục **Kết nối** → **Ngắt kết nối** (bấm hai lần). Admin vô hiệu hóa một người cũng ngắt mọi kết nối Claude của người đó.
+
 ## Cấu trúc
 
 - `shared/` — schema zod và kiểu DTO dùng chung cho web và server
