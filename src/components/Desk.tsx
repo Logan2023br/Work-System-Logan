@@ -16,7 +16,7 @@ function Strip({
   order: number
   readOnly: boolean
   onOpen: () => void
-  onFire: (t: Task) => void
+  onFire: (t: Task) => void | Promise<void>
 }) {
   const t = tone(task.state)
   const pct = task.progress.total > 0 ? Math.round((task.progress.done / task.progress.total) * 100) : 0
@@ -89,7 +89,7 @@ export default function Desk({
   readOnly: boolean
   who: string
   onOpen: (id: string) => void
-  onFire: (t: Task) => void
+  onFire: (t: Task) => void | Promise<void>
 }) {
   const waiting = tasks.filter((t) => t.state === 'needs-you' || t.state === 'blocked')
   const count = useCountUp(waiting.length, booted, 700)

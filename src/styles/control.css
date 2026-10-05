@@ -1,0 +1,127 @@
+/* ============================================================
+   Điều khiển: thanh trạng thái Claude, thanh hành động, vé lệnh,
+   khối tùy chọn, sửa lịch, khung giờ. Màu = trạng thái.
+   ============================================================ */
+
+.presence-bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin: 16px 40px 0;
+  padding: 10px 14px;
+  border-radius: 11px;
+  border: 1px solid var(--line-soft);
+  background: var(--ink-raised);
+  font-size: 13.5px;
+}
+.presence-bar--bad { background: var(--bad-dim); border-color: rgba(255, 92, 77, .3); }
+.presence-bar--needs { background: var(--needs-dim); border-color: rgba(255, 176, 31, .3); }
+.presence-bar__text { font-weight: 600; }
+.presence-bar__sub { color: var(--fg-2); }
+.presence-bar__cta {
+  margin-left: auto;
+  padding: 5px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--needs);
+  color: var(--needs);
+  font-size: 13px;
+}
+.presence-bar__cta:hover { background: var(--needs-dim); }
+
+.tab__count {
+  margin-left: 6px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--needs);
+  color: #14161c;
+  font: 600 11px/18px var(--mono);
+}
+
+.actbar { margin: 4px 0 22px; }
+.actbar__row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.actbtn {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--ink-raised);
+  font-weight: 600;
+  font-size: 14px;
+  transition: transform .15s var(--ease-press), border-color .2s var(--ease), background .2s var(--ease);
+}
+.actbtn:hover:not(:disabled) { transform: translateY(-1px); }
+.actbtn:active:not(:disabled) { transform: translateY(1px); }
+.actbtn:disabled { opacity: .55; cursor: progress; }
+.actbtn--run { border-color: rgba(0, 194, 168, .5); color: var(--run); }
+.actbtn--run:hover:not(:disabled) { background: var(--run-dim); }
+.actbtn--review { border-color: rgba(255, 176, 31, .5); color: var(--needs); }
+.actbtn--review:hover:not(:disabled) { background: var(--needs-dim); }
+.actbtn--fix { border-color: rgba(255, 92, 77, .5); color: var(--bad); }
+.actbtn--fix:hover:not(:disabled) { background: var(--bad-dim); }
+.actbtn--custom:hover:not(:disabled) { border-color: var(--fg-3); }
+.actbar__note-toggle { margin-left: 4px; color: var(--fg-3); font-size: 13px; text-decoration: underline; text-underline-offset: 3px; }
+.actbar__note {
+  display: block;
+  width: 100%;
+  min-height: 70px;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--ink-sunken);
+  color: var(--fg);
+  font: inherit;
+  resize: vertical;
+}
+
+.tickets { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.ticket {
+  position: relative;
+  padding: 14px 16px 12px;
+  border-radius: 14px;
+  background: var(--ink-raised);
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+}
+.ticket::before { content: ''; position: absolute; inset: 0 auto 0 0; width: 3px; background: var(--idle); }
+.ticket--pending::before { background: var(--needs); }
+.ticket--claimed::before { background: var(--run); }
+.ticket--done::before { background: var(--run); }
+.ticket--failed::before, .ticket--expired::before { background: var(--bad); }
+.ticket__head { display: flex; align-items: baseline; gap: 10px; }
+.ticket__label { font-weight: 650; font-family: var(--display); font-size: 16px; }
+.ticket__time { color: var(--fg-3); font-size: 12.5px; }
+.ticket__cancel { margin-left: auto; color: var(--fg-3); font-size: 12.5px; text-decoration: underline; text-underline-offset: 3px; }
+.ticket__cancel:hover { color: var(--bad); }
+.ticket__note { margin: 6px 0 0; color: var(--fg-2); font-size: 13.5px; font-style: italic; }
+.ticket__track { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 14px; position: relative; }
+.ticket__track::before { content: ''; position: absolute; left: 6px; right: 6px; top: 6px; height: 2px; background: var(--line); }
+.ticket__stop { position: relative; display: flex; flex-direction: column; gap: 3px; font-size: 12.5px; color: var(--fg-3); }
+.ticket__stop:nth-child(2) { align-items: center; text-align: center; }
+.ticket__stop:nth-child(3) { align-items: flex-end; text-align: right; }
+.ticket__dot { width: 14px; height: 14px; border-radius: 50%; background: var(--ink-raised); border: 2px solid var(--line); z-index: 1; }
+.ticket__stop.is-past .ticket__dot { background: var(--run); border-color: var(--run); }
+.ticket__stop.is-past { color: var(--fg-2); }
+.ticket__stop.is-now { color: var(--fg); font-weight: 600; }
+.ticket__stop.is-now.is-run .ticket__dot { border-color: var(--run); box-shadow: 0 0 0 4px var(--run-dim); }
+.ticket__stop.is-now.is-bad .ticket__dot { border-color: var(--bad); background: var(--bad); box-shadow: 0 0 0 4px var(--bad-dim); }
+.ticket__stop.is-now.is-idle .ticket__dot { border-color: var(--idle); background: var(--idle); }
+.ticket--pending .ticket__stop.is-now .ticket__dot { border-color: var(--needs); box-shadow: 0 0 0 4px var(--needs-dim); animation: breathe-amber 2.4s var(--ease) infinite; }
+.ticket--claimed .ticket__stop.is-now .ticket__dot { animation: breathe 2.4s var(--ease) infinite; }
+.ticket--done .ticket__stop:last-child .ticket__dot { background: var(--run); border-color: var(--run); }
+.ticket__at { font-family: var(--mono); font-size: 11px; color: var(--fg-3); }
+.ticket__result { margin: 10px 0 0; padding-top: 10px; border-top: 1px solid var(--line-soft); font-size: 13.5px; color: var(--fg-2); }
+@keyframes breathe-amber {
+  0% { box-shadow: 0 0 0 0 rgba(255, 176, 31, .45); }
+  70% { box-shadow: 0 0 0 8px rgba(255, 176, 31, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(255, 176, 31, 0); }
+}
+
+@media (max-width: 720px) {
+  .presence-bar { margin-left: 16px; margin-right: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ticket__dot { animation: none !important; }
+  .actbtn { transition: none; }
+}

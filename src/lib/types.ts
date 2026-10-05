@@ -3,6 +3,7 @@ export type {
   ClaudeLinkDTO as ClaudeLink,
   MyConnectionsDTO as MyConnections,
   CommandDTO as Command,
+  SchedulePreviewDTO as SchedulePreview,
   ConnectionDTO as Connection,
   MeDTO as Me,
   PersonDTO as Person,
@@ -15,3 +16,4 @@ export type {
 } from '../../shared/dto'
 export type { Block, Metric, Milestone, SourceKind, TaskState } from '../../shared/schema'
 export type ReflectNote = import('../../shared/schema').ReflectNote
+export type { WorkHours } from '../../shared/schema'

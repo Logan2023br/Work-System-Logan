@@ -88,19 +88,22 @@ export function Key({
   label: string
   kind: 'run' | 'review' | 'fix'
   tone: Tone
-  onPress?: () => void
+  onPress?: () => void | Promise<void>
 }) {
   const [busy, setBusy] = useState(false)
   const timer = useRef<number>(0)
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
-  function press(e: React.MouseEvent) {
+  async function press(e: React.MouseEvent) {
     e.stopPropagation()
     if (busy) return
     setBusy(true)
-    onPress?.()
-    timer.current = window.setTimeout(() => setBusy(false), 1600)
+    try {
+      await onPress?.()
+    } finally {
+      timer.current = window.setTimeout(() => setBusy(false), 250)
+    }
   }
 
   const Icon = kind === 'run' ? IconPlay : kind === 'review' ? IconCheck : IconWrench
@@ -109,7 +112,7 @@ export function Key({
   return (
     <button className={`key ${cls} ${busy ? 'key--busy' : ''}`} data-pressed={busy} onClick={press}>
       {busy ? <span className="key__spin" /> : <Icon />}
-      {busy ? 'Đang chạy…' : label}
+      {busy ? 'Đang gửi…' : label}
     </button>
   )
 }

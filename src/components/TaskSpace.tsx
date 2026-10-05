@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from 'framer-motion'
 import type { Task, Run } from '../lib/types'
 import { tone, ago, dayAndClock, shortDate } from '../lib/format'
 import { Lamp, Key } from './Bits'
+import { ActionBar, CommandTickets } from './Commands'
 import { IconBack, IconChev, SourceIcon } from './Icons'
 
-const TABS = ['Báo cáo', 'Tiến độ', 'Nguồn dữ liệu', 'Lần chạy'] as const
+const TABS = ['Báo cáo', 'Tiến độ', 'Lệnh', 'Nguồn dữ liệu', 'Lần chạy'] as const
 type Tab = (typeof TABS)[number]
 
 const SRC_LABEL: Record<string, string> = { ok: 'Đồng bộ tốt', stale: 'Dữ liệu cũ', error: 'Lỗi' }
@@ -56,13 +57,20 @@ export default function TaskSpace({
   backLabel,
   onBack,
   onFire,
+  onSend,
+  onCancel,
+  now,
 }: {
   task: Task
   readOnly: boolean
   backLabel: string
   onBack: () => void
-  onFire: (t: Task) => void
+  onFire: (t: Task) => void | Promise<void>
+  onSend: (actionId: string, note?: string) => Promise<void>
+  onCancel: (id: string) => Promise<void>
+  now: Date
 }) {
+  const live = task.commands.filter((c) => c.status === 'pending' || c.status === 'claimed').length
   const [tab, setTab] = useState<Tab>('Báo cáo')
   const t = tone(task.state)
 
@@ -95,6 +103,7 @@ export default function TaskSpace({
         {TABS.map((x) => (
           <button key={x} className="tab" role="tab" aria-selected={tab === x} onClick={() => setTab(x)}>
             {x}
+            {x === 'Lệnh' && live > 0 && <span className="tab__count">{live}</span>}
             {tab === x && <motion.span layoutId="tab-underline" className="tab__underline" />}
           </button>
         ))}
@@ -178,6 +187,13 @@ export default function TaskSpace({
                   đã đóng.
                 </div>
               </div>
+            </div>
+          )}
+
+          {tab === 'Lệnh' && (
+            <div>
+              {!readOnly && <ActionBar task={task} onSend={onSend} />}
+              <CommandTickets commands={task.commands} readOnly={readOnly} now={now} onCancel={onCancel} />
             </div>
           )}
 

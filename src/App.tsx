@@ -3,7 +3,8 @@ import type { ReactElement } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Me, MyConnections, Person, Task, Workspace } from './lib/types'
 import { ApiError } from './lib/api'
-import { loadMe, loadMyConnections, loadPeople, loadWorkspace, logout, revokeLink } from './lib/data'
+import { cancelCommandApi, loadMe, loadMyConnections, loadPeople, loadWorkspace, logout, revokeLink, sendCommand } from './lib/data'
+import { PresenceBar } from './components/Presence'
 import { usePoll } from './lib/usePoll'
 import { clock } from './lib/format'
 import Desk from './components/Desk'
@@ -114,9 +115,27 @@ function Shell({ me }: { me: Me }) {
     setToast('Đã ngắt kết nối Claude')
     refresh()
   }
-  function fire(t: Task) {
-    setToast(`${t.action.label} · ${t.name}`)
+  async function send(t: Task, actionId: string, note?: string) {
+    try {
+      const c = await sendCommand(t.id, actionId, note)
+      const when = ws?.owner.nextDispatchAt ? `khoảng ${clock(ws.owner.nextDispatchAt)}` : 'ở lần Điều phối kế tiếp'
+      setToast(`Đã gửi "${c.label}" — Claude nhận ${when}`)
+      refresh()
+    } catch (e) {
+      setToast((e as Error).message)
+    }
   }
+  const fire = (t: Task) => send(t, t.action.actionId)
+  async function cancel(id: string) {
+    try {
+      await cancelCommandApi(id)
+      setToast('Đã hủy lệnh')
+      refresh()
+    } catch (e) {
+      setToast((e as Error).message)
+    }
+  }
+
 
   const readOnly = ws ? !ws.isMine : true
   const who = ws && !ws.isMine ? ws.owner.name : 'bạn'
@@ -176,6 +195,8 @@ function Shell({ me }: { me: Me }) {
           </div>
         )}
 
+        {ws && view !== 'team' && <PresenceBar owner={ws.owner} isMine={ws.isMine} now={now} onConnect={() => go('connections')} />}
+
         {err && (
           <div className="banner banner--bad" role="alert">
             {err}
@@ -190,7 +211,7 @@ function Shell({ me }: { me: Me }) {
         ) : (
           <div key={task ? `task-${task.id}` : `${viewing}-${view}`} className="fadein">
             {task ? (
-              <TaskSpace task={task} readOnly={readOnly} backLabel={ws.isMine ? 'Bàn điều phối' : `Bàn của ${ws.owner.name}`} onBack={() => setOpenTask(null)} onFire={fire} />
+              <TaskSpace task={task} readOnly={readOnly} backLabel={ws.isMine ? 'Bàn điều phối' : `Bàn của ${ws.owner.name}`} onBack={() => setOpenTask(null)} onFire={fire} onSend={(actionId, note) => send(task, actionId, note)} onCancel={cancel} now={now} />
             ) : view === 'desk' ? (
               <Desk tasks={ws.tasks} activity={ws.activity} booted={booted} now={now} readOnly={readOnly} who={who} onOpen={setOpenTask} onFire={fire} />
             ) : view === 'schedule' ? (
