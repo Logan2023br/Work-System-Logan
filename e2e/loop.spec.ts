@@ -73,3 +73,17 @@ test('đồng nghiệp chỉ đọc; ⌘K tìm không dấu', async ({ page }) =
   await page.getByRole('button', { name: 'Lịch chạy' }).click()
   await expect(page.getByRole('switch')).toHaveCount(0)
 })
+
+test('bàn phím: Enter trên nút Vô hiệu hóa không mở bàn người đó; Enter khi đang gõ dấu (IME) không chọn kết quả', async ({ page }) => {
+  await page.goto('/auth/dev?email=tutnv@bravebits.vn&name=Logan')
+  await page.getByRole('button', { name: 'Đội ngũ' }).click()
+  await page.locator('.mate__admin').first().focus()
+  await page.keyboard.press('Enter')
+  await expect(page.locator('.mate__admin.is-armed')).toHaveCount(1)
+  await expect(page.locator('.team')).toBeVisible()
+
+  await page.keyboard.press('ControlOrMeta+k')
+  await page.getByPlaceholder(/Tìm task/).fill('binh')
+  await page.getByPlaceholder(/Tìm task/).evaluate((el) => el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', isComposing: true, bubbles: true })))
+  await expect(page.locator('.pal')).toBeVisible()
+})

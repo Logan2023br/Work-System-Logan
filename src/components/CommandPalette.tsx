@@ -38,6 +38,8 @@ export default function CommandPalette({ open, items, onClose }: { open: boolean
             setI(0)
           }}
           onKeyDown={(e) => {
+            // Đang gõ dấu (Telex/VNI qua IME): Enter là để chốt chữ, không phải để chọn kết quả.
+            if (e.nativeEvent.isComposing || e.keyCode === 229) return
             if (e.key === 'Escape') onClose()
             else if (e.key === 'ArrowDown') {
               e.preventDefault()

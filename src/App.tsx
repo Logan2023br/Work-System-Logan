@@ -209,7 +209,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
 
       <div className="main">
         <header className="topbar">
-          <span className="topbar__title">{view === 'team' ? 'Đội ngũ' : ws && !ws.isMine ? `Bàn của ${ws.owner.name}` : 'Bàn điều phối'}</span>
+          <span className="topbar__title">{view === 'desk' || task ? (ws && !ws.isMine ? `Bàn của ${ws.owner.name}` : 'Bàn điều phối') : NAV.find((n) => n.id === view)?.label}</span>
           {ws && view !== 'team' && (
             <span className="topbar__sub">
               {ws.week.label} · {ws.tasks.length} việc đang theo dõi

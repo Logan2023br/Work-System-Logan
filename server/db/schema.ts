@@ -140,6 +140,8 @@ export const oauthClients = pgTable('oauth_clients', {
   redirectUris: text('redirect_uris').array().notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
   updatedAt: ts('updated_at').notNull().defaultNow(),
+  /** Lần cuối client này được cấp token — client từng dùng không bao giờ bị dọn (Claude giữ client_id đã đăng ký). */
+  lastUsedAt: ts('last_used_at'),
 })
 
 export const oauthCodes = pgTable('oauth_codes', {

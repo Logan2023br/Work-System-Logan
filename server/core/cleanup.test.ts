@@ -46,4 +46,10 @@ describe('cleanup', () => {
     expect(await cleanup(db, now)).toEqual({ logsCleared: 0, sessions: 1, codes: 1, tokens: 2, clients: 1 })
     expect((await db.select().from(oauthClients)).map((c) => c.clientId).sort()).toEqual(['dcr_dung', 'dcr_moi'])
   })
+
+  it('không xóa client DCR đã từng được cấp token (người dùng còn nối lại được)', async () => {
+    await db.insert(oauthClients).values({ clientId: 'dcr_cu', kind: 'dcr', name: 'C', redirectUris: ['https://claude.ai/api/mcp/auth_callback'], createdAt: daysAgo(40), lastUsedAt: daysAgo(30) })
+    await cleanup(db, now)
+    expect((await db.select().from(oauthClients)).map((c) => c.clientId)).toContain('dcr_cu')
+  })
 })

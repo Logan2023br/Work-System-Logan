@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto'
 import { and, desc, eq, gt, isNull, lt, or } from 'drizzle-orm'
 import type { ClaudeLinkDTO } from '../../shared/dto.js'
-import { oauthCodes, oauthTokens, users } from '../db/schema.js'
+import { oauthClients, oauthCodes, oauthTokens, users } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { notFound } from './errors.js'
 import type { ClientInfo } from './oauth-clients.js'
@@ -84,6 +84,7 @@ export async function exchangeCode(
 
   const pair = newPair(now)
   await db.insert(oauthTokens).values({ userId: row.userId, clientId: client.clientId, clientName: client.name, resource: row.resource ?? '', ...pair.cols })
+  await db.update(oauthClients).set({ lastUsedAt: now }).where(eq(oauthClients.clientId, client.clientId))
   return toPair(pair.access, pair.refresh)
 }
 

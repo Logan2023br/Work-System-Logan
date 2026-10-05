@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, lt, or, sql } from 'drizzle-orm'
+import { and, eq, isNotNull, isNull, lt, or, sql } from 'drizzle-orm'
 import { oauthClients, oauthCodes, oauthTokens, runs, sessions } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 
@@ -29,9 +29,12 @@ export async function cleanup(db: Db, now: Date): Promise<CleanupResult> {
     .delete(oauthClients)
     .where(
       and(
+        // Chỉ dọn client đăng ký rồi bỏ đó, CHƯA TỪNG được cấp token và không còn code chờ đổi.
         eq(oauthClients.kind, 'dcr'),
+        isNull(oauthClients.lastUsedAt),
         lt(oauthClients.createdAt, ago(1)),
         sql`not exists (select 1 from oauth_tokens t where t.client_id = ${oauthClients.clientId})`,
+        sql`not exists (select 1 from oauth_codes c where c.client_id = ${oauthClients.clientId})`,
       ),
     )
     .returning({ id: oauthClients.clientId })

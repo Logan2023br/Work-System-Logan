@@ -65,27 +65,17 @@ export default function Team({
 
       <div className="team">
         {people.map((p, i) => (
-          <div
-            key={p.id}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault()
-                onVisit(p.id)
-              }
-            }}
-            className={`mate rise${p.active ? '' : ' mate--gone'}`}
-            style={{ animationDelay: `${0.04 * i}s` }}
-            onClick={() => onVisit(p.id)}
-          >
+          <div key={p.id} className={`mate rise${p.active ? '' : ' mate--gone'}`} style={{ animationDelay: `${0.04 * i}s` }}>
             <div className="mate__top">
               <span className={`avatar avatar--lg presence presence--${p.active ? p.presence : 'never'}`}>
                 {p.avatarUrl ? <img src={p.avatarUrl} alt="" referrerPolicy="no-referrer" /> : p.name[0]}
               </span>
               <div className="mate__who">
                 <div className="mate__name">
-                  {p.name}
+                  {/* Nút thật, phủ cả thẻ bằng ::after — thẻ bấm được bằng chuột lẫn bàn phím, không lồng nút trong nút. */}
+                  <button className="mate__open" onClick={() => onVisit(p.id)} aria-label={`Mở bàn của ${p.name}`}>
+                    {p.name}
+                  </button>
                   {p.id === meId && <span className="mate__me">bạn</span>}
                 </div>
                 <div className="mate__presence">{presenceText(p, now)}</div>

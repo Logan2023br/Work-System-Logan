@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest'
 import { eq } from 'drizzle-orm'
-import { users } from '../db/schema.js'
+import { oauthClients, users } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { makeUser, resetDb, testDb } from '../test/db.js'
 import type { ClientInfo } from './oauth-clients.js'
@@ -126,5 +126,15 @@ describe('refresh với resource sai', () => {
     const t = await issue(u.id)
     await expect(refreshTokens(db, { refreshToken: t.refresh_token, clientId: 'dcr_1', resource: 'https://khac.test/mcp' }, now)).rejects.toMatchObject({ error: 'invalid_target' })
     await expect(refreshTokens(db, { refreshToken: t.refresh_token, clientId: 'dcr_1', resource: RES }, now)).resolves.toMatchObject({ token_type: 'Bearer' })
+  })
+})
+
+describe('đánh dấu client đã dùng', () => {
+  it('đổi code lấy token ghi lastUsedAt cho client', async () => {
+    const u = await makeUser(db)
+    await db.insert(oauthClients).values({ clientId: 'dcr_1', kind: 'dcr', name: 'Claude', redirectUris: client.redirectUris })
+    await issue(u.id)
+    const [c] = await db.select().from(oauthClients)
+    expect(c.lastUsedAt?.toISOString()).toBe(now.toISOString())
   })
 })
