@@ -10,7 +10,7 @@ export const LIMITS = {
   tableRows: 200,
   tableCols: 12,
   checklistItems: 100,
-  chartSeries: 4,
+  chartSeries: 3,
   chartPoints: 60,
   noteChars: 4000,
   instructionsChars: 8000,
@@ -185,6 +185,7 @@ export type ReflectNote = z.output<typeof reflectNoteSchema>
 export type WeeklyReportInput = z.output<typeof weeklyReportSchema>
 export const runReportSchema = z.object({
   slug: slugSchema,
+  leaseId: z.uuid('leaseId phải là UUID nhận từ dieu_phoi').optional(),
   status: z.enum(RUN_STATUSES),
   note: text(500).default(''),
   log: z
@@ -210,3 +211,24 @@ export type WeeklyReportInputOptionalWeek = z.output<typeof weeklyReportInputSch
 export function zodMessage(e: z.ZodError): string {
   return e.issues.map((i) => `${i.path.length ? i.path.join('.') : '(gốc)'}: ${i.message}`).join('; ')
 }
+
+export const commandInputSchema = z.object({
+  actionId: z.string().trim().min(1).max(60),
+  note: text(LIMITS.commandNoteChars).optional(),
+})
+export type CommandInput = z.output<typeof commandInputSchema>
+
+export const scheduleInputSchema = z.object({
+  cron: z.string().trim().min(9).max(100),
+  scheduleLabel: text(80).optional(),
+})
+export type ScheduleInput = z.output<typeof scheduleInputSchema>
+
+export const pauseInputSchema = z.object({ paused: z.boolean() })
+
+const hhmm = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Giờ dạng HH:MM, ví dụ 08:00')
+export const workHoursSchema = z
+  .object({ workDays: z.array(z.number().int().min(0).max(6)).min(1).max(7), workStart: hhmm, workEnd: hhmm })
+  .refine((v) => v.workStart < v.workEnd, 'Giờ bắt đầu phải trước giờ kết thúc')
+  .refine((v) => new Set(v.workDays).size === v.workDays.length, 'Ngày bị trùng')
+export type WorkHours = z.output<typeof workHoursSchema>

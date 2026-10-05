@@ -125,3 +125,40 @@ describe('zodMessage', () => {
     expect(zodMessage(r.error!)).toMatch(/^slug: /)
   })
 })
+import { commandInputSchema, workHoursSchema } from './schema.js'
+
+describe('giới hạn biểu đồ', () => {
+  it('tối đa 3 series (giới hạn bảng màu an toàn cho mù màu)', () => {
+    const s = (name: string) => ({ name, values: [1, 2] })
+    const chart = (n: number) => ({ id: 'c', type: 'chart', title: 'C', data: { kind: 'line', labels: ['a', 'b'], series: Array.from({ length: n }, (_, i) => s(`s${i}`)) } })
+    expect(blockSchema.safeParse(chart(3)).success).toBe(true)
+    expect(blockSchema.safeParse(chart(4)).success).toBe(false)
+  })
+})
+
+describe('runReportSchema.leaseId', () => {
+  it('nhận uuid, từ chối chuỗi rác', () => {
+    expect(runReportSchema.safeParse({ slug: 'a', status: 'ok', leaseId: '6f1c2d3e-4b5a-4c6d-8e9f-0a1b2c3d4e5f' }).success).toBe(true)
+    expect(runReportSchema.safeParse({ slug: 'a', status: 'ok', leaseId: 'abc' }).success).toBe(false)
+  })
+})
+
+describe('commandInputSchema', () => {
+  it('ghi chú tối đa 1000 ký tự', () => {
+    expect(commandInputSchema.safeParse({ actionId: 'run', note: 'x'.repeat(1000) }).success).toBe(true)
+    expect(commandInputSchema.safeParse({ actionId: 'run', note: 'x'.repeat(1001) }).success).toBe(false)
+  })
+})
+
+describe('workHoursSchema', () => {
+  it('nhận khung giờ hợp lệ', () => {
+    expect(workHoursSchema.safeParse({ workDays: [1, 2, 3, 4, 5], workStart: '08:00', workEnd: '19:00' }).success).toBe(true)
+  })
+  it.each([
+    [{ workDays: [], workStart: '08:00', workEnd: '19:00' }],
+    [{ workDays: [1], workStart: '19:00', workEnd: '08:00' }],
+    [{ workDays: [1], workStart: '8:00', workEnd: '19:00' }],
+    [{ workDays: [1, 1], workStart: '08:00', workEnd: '19:00' }],
+    [{ workDays: [7], workStart: '08:00', workEnd: '19:00' }],
+  ])('từ chối %j', (v) => expect(workHoursSchema.safeParse(v).success).toBe(false))
+})

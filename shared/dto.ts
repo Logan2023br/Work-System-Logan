@@ -14,7 +14,7 @@ export interface MeDTO {
   workEnd: string
 }
 
-export type Presence = 'online' | 'offline' | 'never'
+export type Presence = 'online' | 'offline' | 'resting' | 'never'
 
 export interface PersonDTO {
   id: string
@@ -25,6 +25,7 @@ export interface PersonDTO {
   active: boolean
   presence: Presence
   lastSeenAt: string | null
+  nextDispatchAt: string | null
   taskCount: number
   counts: Record<TaskState, number>
   health: number | null
@@ -132,4 +133,17 @@ export interface ClaudeLinkDTO {
 export interface MyConnectionsDTO {
   connectorUrl: string
   links: ClaudeLinkDTO[]
+}
+
+export interface DispatchItem {
+  leaseId: string
+  loai: 'lenh' | 'lich'
+  task: { slug: string; name: string; instructions: string; skill: string | null }
+  lenh?: { id: string; actionId: string; label: string; instructions: string; note: string | null }
+}
+
+export interface SchedulePreviewDTO {
+  valid: boolean
+  label: string | null
+  next: string[]
 }
