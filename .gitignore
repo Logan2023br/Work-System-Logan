@@ -28,3 +28,6 @@ dist-ssr
 .vercel
 .superpowers
 public/downloads
+.pglite-e2e
+test-results
+playwright-report
