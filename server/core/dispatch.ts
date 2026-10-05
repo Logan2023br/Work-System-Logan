@@ -1,4 +1,4 @@
-import { and, eq, inArray, isNull, lt, lte, notInArray, or, sql } from 'drizzle-orm'
+import { and, eq, gt, inArray, isNull, lt, lte, ne, notInArray, or, sql } from 'drizzle-orm'
 import type { DispatchItem } from '../../shared/dto.js'
 import { activity, commands, tasks, users } from '../db/schema.js'
 import type { Db } from '../db/types.js'
@@ -25,11 +25,21 @@ export async function dispatch(db: Db, owner: User, now: Date): Promise<Dispatch
       .set({ status: 'expired', finishedAt: now, result: 'Claude đã nhận nhưng không báo kết quả trong 60 phút' })
       .where(and(eq(commands.ownerId, owner.id), eq(commands.status, 'claimed'), lt(commands.claimedAt, stale)))
 
+    // Task đang có lần chạy dở (lease còn hạn) → "Chạy ngay" của nó chờ vòng sau, không cướp lease.
+    const busy = (
+      await tx.select({ id: tasks.id }).from(tasks).where(and(eq(tasks.ownerId, owner.id), gt(tasks.leaseUntil, now)))
+    ).map((t) => t.id)
     const claimed = (
       await tx
         .update(commands)
         .set({ status: 'claimed', claimedAt: now, leaseId: sql`gen_random_uuid()` })
-        .where(and(eq(commands.ownerId, owner.id), eq(commands.status, 'pending')))
+        .where(
+          and(
+            eq(commands.ownerId, owner.id),
+            eq(commands.status, 'pending'),
+            busy.length ? or(ne(commands.actionId, 'run'), notInArray(commands.taskId, busy)) : undefined,
+          ),
+        )
         .returning()
     ).sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
 

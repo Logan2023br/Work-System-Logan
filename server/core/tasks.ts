@@ -142,22 +142,24 @@ export async function reportRun(
   }
   const advancesSchedule = trigger !== 'command' || cmd?.actionId === 'run'
 
-  const state = input.state ?? STATE_FROM_STATUS[input.status]
-  const updates = {
-    state,
-    stateLabel: input.stateLabel ?? STATE_LABEL[state],
-    health: input.health ?? row.health,
-    progress: input.progress ?? row.progress,
-    metrics: input.metrics ?? row.metrics,
-    milestones: input.milestones ?? row.milestones,
-    blocks: input.blocks ?? row.blocks,
-    report: input.report ?? row.report,
-    trend: input.trendThem ? [...row.trend, ...input.trendThem].slice(-LIMITS.trend) : row.trend,
-  }
-  if (byteSize({ ...definitionOf(row), ...updates }) > LIMITS.taskBytes) throw invalid('Task sau khi cập nhật vượt giới hạn 256 KB — rút gọn blocks hoặc report')
-
   const startedAt = input.durationMs !== undefined ? new Date(now.getTime() - input.durationMs) : now
   return db.transaction(async (tx) => {
+    // Đọc lại task và KHÓA hàng trong transaction: mọi thay đổi xen giữa (tạm dừng, đổi lịch, báo cáo khác) đều được tính.
+    const [cur] = await tx.select().from(tasks).where(eq(tasks.id, row.id)).for('update')
+    const state = input.state ?? STATE_FROM_STATUS[input.status]
+    const updates = {
+      state,
+      stateLabel: input.stateLabel ?? STATE_LABEL[state],
+      health: input.health ?? cur.health,
+      progress: input.progress ?? cur.progress,
+      metrics: input.metrics ?? cur.metrics,
+      milestones: input.milestones ?? cur.milestones,
+      blocks: input.blocks ?? cur.blocks,
+      report: input.report ?? cur.report,
+      trend: input.trendThem ? [...cur.trend, ...input.trendThem].slice(-LIMITS.trend) : cur.trend,
+    }
+    if (byteSize({ ...definitionOf(cur), ...updates }) > LIMITS.taskBytes) throw invalid('Task sau khi cập nhật vượt giới hạn 256 KB — rút gọn blocks hoặc report')
+
     const [run] = await tx
       .insert(runs)
       .values({
@@ -171,8 +173,9 @@ export async function reportRun(
       return { runId: prior!.id, task: row, duplicate: true }
     }
 
-    const schedule = advancesSchedule ? { lastRunAt: now, nextRunAt: row.paused ? row.nextRunAt : nextRunAfter(row.cron, now) } : {}
-    const release = input.leaseId && row.leaseId === input.leaseId ? { leaseId: null, leaseUntil: null } : {}
+    const schedule = advancesSchedule ? { lastRunAt: now, nextRunAt: cur.paused ? cur.nextRunAt : nextRunAfter(cur.cron, now) } : {}
+    // Chỉ mở lease nếu task vẫn đang giữ đúng lease này (không xóa lease mới của lần giao khác).
+    const release = input.leaseId && cur.leaseId === input.leaseId ? { leaseId: null, leaseUntil: null } : {}
     const [task] = await tx
       .update(tasks)
       .set({ ...updates, ...schedule, ...release, updatedAt: now })

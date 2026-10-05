@@ -213,3 +213,25 @@ describe('reportRun với leaseId', () => {
     await expect(reportRun(db, u, { slug: 'khac', status: 'ok', note: '', log: [], leaseId: item.leaseId }, now)).rejects.toMatchObject({ code: 'invalid' })
   })
 })
+
+describe('reportRun đọc task bên trong transaction (chống ghi đè thay đổi xen giữa)', () => {
+  it('người dùng tạm dừng ngay trước khi báo cáo ghi → task vẫn tạm dừng, không có lần chạy kế tiếp', async () => {
+    const u = await makeUser(db)
+    const t = await createTask(db, u, def(), now)
+    // Db giả lập: chen một lần "tạm dừng" từ web vào ngay trước khi transaction của reportRun bắt đầu.
+    const racing = new Proxy(db, {
+      get(target, prop, recv) {
+        if (prop === 'transaction') {
+          return async (fn: Parameters<Db['transaction']>[0]) => {
+            await target.update(tasks).set({ paused: true, nextRunAt: null }).where(eq(tasks.id, t.id))
+            return target.transaction(fn)
+          }
+        }
+        return Reflect.get(target, prop, recv)
+      },
+    }) as Db
+    const { task } = await reportRun(racing, u, { slug: 'upsell', status: 'ok', note: '', log: [], trendThem: [5] }, now)
+    expect(task.paused).toBe(true)
+    expect(task.nextRunAt).toBeNull()
+  })
+})

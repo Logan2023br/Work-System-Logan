@@ -100,3 +100,20 @@ describe('dispatch', () => {
     expect(await dispatch(db, u, now)).toEqual([])
   })
 })
+
+describe('dispatch — "Chạy ngay" khi lần chạy theo lịch còn đang làm', () => {
+  it('không cướp lease đang hiệu lực: lệnh chờ tới khi lần chạy trước báo xong hoặc hết hạn', async () => {
+    const u = await makeUser(db)
+    const t = await makeTask(db, u.id, { nextRunAt: past })
+    const [first] = await dispatch(db, u, now)
+    expect(first.loai).toBe('lich')
+    const c = await cmd(t, 'run', new Date(now.getTime() + 5 * 60_000))
+    expect(await dispatch(db, u, new Date(now.getTime() + 15 * 60_000))).toEqual([])
+    expect((await lookup(c.id)).status).toBe('pending')
+    const [row] = await db.select().from(tasks).where(eq(tasks.id, t.id))
+    expect(row.leaseId).toBe(first.leaseId)
+    // Lease cũ hết hạn → lệnh được giao.
+    const later2 = await dispatch(db, u, new Date(now.getTime() + LEASE_MS + 60_000))
+    expect(later2.map((i) => i.loai)).toEqual(['lenh'])
+  })
+})
