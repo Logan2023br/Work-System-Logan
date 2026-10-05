@@ -1,24 +1,12 @@
-import { useState } from 'react'
 import type { Task } from '../lib/types'
 import { tone, TONE_HEX, until, dayAndClock } from '../lib/format'
-import { Switch } from './Bits'
+import { weekSlots } from '../../shared/cronSlots'
 
 const DAY_NAMES = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN']
 const FROM = 4
 const TO = 21
 
-/** Đọc `m h * * d` — đủ cho các lịch đang dùng, trả về các điểm chạy trong tuần. */
-function slots(cron: string): { day: number; hour: number; min: number }[] {
-  const [m, h, , , dow] = cron.trim().split(/\s+/)
-  const hours = h.split(',').map(Number).filter((n) => !Number.isNaN(n))
-  const mins = Number(m) || 0
-  // dow theo cron: 0 = CN. Lưới hiển thị bắt đầu từ T2.
-  const days = dow === '*' ? [0, 1, 2, 3, 4, 5, 6] : dow.split(',').map((d) => (Number(d) + 6) % 7)
-  return days.flatMap((day) => hours.map((hour) => ({ day, hour, min: mins })))
-}
-
 export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
-  const [off, setOff] = useState<Record<string, boolean>>({})
   const today = (now.getDay() + 6) % 7
 
   return (
@@ -26,8 +14,7 @@ export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
       <header className="pagehead">
         <h1 className="sec">Lịch chạy</h1>
         <p className="sec__note">
-          Bảy ngày tới, từ {FROM}:00 đến {TO}:00. Tắt một lịch thì task vẫn mở được bằng tay, chỉ là
-          không tự chạy nữa.
+          Bảy ngày tới, từ {FROM}:00 đến {TO}:00, theo giờ Việt Nam. Task tạm dừng không hiện trên lưới.
         </p>
       </header>
 
@@ -57,8 +44,8 @@ export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
           ))}
 
           {tasks.flatMap((task) =>
-            slots(task.cron)
-              .filter((s) => s.hour >= FROM && s.hour <= TO && !off[task.id])
+            weekSlots(task.cron)
+              .filter((s) => s.hour >= FROM && s.hour <= TO && !task.paused)
               .map((s, i) => {
                 const top = ((s.hour + s.min / 60 - FROM) / (TO - FROM)) * 100
                 return (
@@ -101,18 +88,13 @@ export default function Schedule({ tasks, now }: { tasks: Task[]; now: Date }) {
           </div>
           <div className="job__r">
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: off[t.id] ? 'var(--fg-3)' : 'var(--needs)' }}>
-                {off[t.id] ? 'đã tắt' : until(t.nextRun, now)}
+              <div style={{ fontFamily: 'var(--mono)', fontSize: 13, color: t.paused ? 'var(--fg-3)' : 'var(--needs)' }}>
+                {t.paused ? 'đã tạm dừng' : until(t.nextRun, now)}
               </div>
               <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--fg-3)', marginTop: 2 }}>
                 {dayAndClock(t.nextRun)}
               </div>
             </div>
-            <Switch
-              on={!off[t.id]}
-              label={`Lịch chạy của ${t.name}`}
-              onToggle={() => setOff((s) => ({ ...s, [t.id]: !s[t.id] }))}
-            />
           </div>
         </div>
       ))}

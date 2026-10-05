@@ -1,39 +1,82 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import type { ReactElement } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import type { Workspace, Task } from './lib/types'
-import { loadWorkspace } from './lib/data'
+import type { Me, Person, Task, Workspace } from './lib/types'
+import { ApiError } from './lib/api'
+import { loadMe, loadPeople, loadWorkspace, logout } from './lib/data'
+import { usePoll } from './lib/usePoll'
 import { clock } from './lib/format'
 import Desk from './components/Desk'
 import TaskSpace from './components/TaskSpace'
 import Schedule from './components/Schedule'
 import Connections from './components/Connections'
 import Reflect from './components/Reflect'
-import { IconDesk, IconClock, IconPlug, IconThink } from './components/Icons'
+import Team from './components/Team'
+import Login from './components/Login'
+import { IconDesk, IconClock, IconPlug, IconThink, IconTeam } from './components/Icons'
 
-type View = 'desk' | 'schedule' | 'connections' | 'reflect'
+type View = 'desk' | 'team' | 'schedule' | 'connections' | 'reflect'
 
 const NAV: { id: View; label: string; Icon: () => ReactElement }[] = [
   { id: 'desk', label: 'Bàn điều phối', Icon: IconDesk },
+  { id: 'team', label: 'Đội ngũ', Icon: IconTeam },
   { id: 'schedule', label: 'Lịch chạy', Icon: IconClock },
   { id: 'connections', label: 'Kết nối', Icon: IconPlug },
   { id: 'reflect', label: 'Nhìn lại tuần', Icon: IconThink },
 ]
 
 export default function App() {
-  const [ws, setWs] = useState<Workspace | null>(null)
-  const [err, setErr] = useState<string | null>(null)
+  const [me, setMe] = useState<Me | null | undefined>(undefined)
+  const [fatal, setFatal] = useState<string | null>(null)
+  const loginError = new URLSearchParams(window.location.search).get('error')
+
+  useEffect(() => {
+    if (window.location.pathname === '/login') {
+      setMe(null)
+      return
+    }
+    loadMe()
+      .then(setMe)
+      .catch((e: unknown) => (e instanceof ApiError && e.status === 401 ? setMe(null) : setFatal((e as Error).message)))
+  }, [])
+
+  if (fatal) return <div className="loading loading--bad">{fatal}</div>
+  if (me === undefined) return <div className="loading">đang mở bàn điều phối…</div>
+  if (me === null) return <Login error={loginError} />
+  return <Shell me={me} />
+}
+
+function Shell({ me }: { me: Me }) {
   const [view, setView] = useState<View>('desk')
+  const [viewing, setViewing] = useState<string>(me.id)
+  const [ws, setWs] = useState<Workspace | null>(null)
+  const [people, setPeople] = useState<Person[]>([])
+  const [err, setErr] = useState<string | null>(null)
   const [openTask, setOpenTask] = useState<string | null>(null)
   const [booted, setBooted] = useState(false)
   const [now, setNow] = useState(new Date())
   const [toast, setToast] = useState<string | null>(null)
 
-  useEffect(() => {
-    loadWorkspace().then(setWs).catch((e: Error) => setErr(e.message))
-  }, [])
+  const refresh = useCallback(() => {
+    Promise.all([loadWorkspace(viewing), loadPeople()])
+      .then(([w, p]) => {
+        setWs(w)
+        setPeople(p)
+        setErr(null)
+      })
+      .catch((e: unknown) => {
+        if (e instanceof ApiError && e.status === 401) window.location.href = '/login'
+        else setErr((e as Error).message)
+      })
+  }, [viewing])
 
-  // Khoảnh khắc bàn khởi động — chạy đúng một lần.
+  useEffect(() => {
+    setWs(null)
+    setBooted(false)
+    refresh()
+  }, [refresh])
+  usePoll(refresh, 30_000)
+
   useEffect(() => {
     if (!ws) return
     const id = window.setTimeout(() => setBooted(true), 90)
@@ -51,39 +94,32 @@ export default function App() {
     return () => window.clearTimeout(id)
   }, [toast])
 
-  if (err) {
-    return (
-      <div className="loading" style={{ color: 'var(--bad)', textAlign: 'center', padding: 24 }}>
-        {err}
-        <br />
-        <span style={{ color: 'var(--fg-3)' }}>Kiểm tra lại các file trong public/data.</span>
-      </div>
-    )
-  }
-  if (!ws) return <div className="loading">đang đọc dữ liệu…</div>
-
-  const waiting = ws.tasks.filter((t) => t.state === 'needs-you' || t.state === 'blocked').length
-  const task = openTask ? ws.tasks.find((t) => t.id === openTask) ?? null : null
-
   function go(v: View) {
     setOpenTask(null)
     setView(v)
   }
-
-  function fire(t: Task) {
-    setToast(
-      t.action.kind === 'review'
-        ? `Mở phần chờ duyệt của ${t.name}`
-        : t.action.kind === 'fix'
-          ? `Mở nhật ký lỗi của ${t.name}`
-          : `${t.name} bắt đầu chạy`
-    )
+  function visit(personId: string) {
+    setOpenTask(null)
+    setViewing(personId)
+    setView('desk')
   }
+  async function signOut() {
+    await logout().catch(() => undefined)
+    window.location.href = '/login'
+  }
+  function fire(t: Task) {
+    setToast(`${t.action.label} · ${t.name}`)
+  }
+
+  const readOnly = ws ? !ws.isMine : true
+  const who = ws && !ws.isMine ? ws.owner.name : 'bạn'
+  const waiting = ws ? ws.tasks.filter((t) => t.state === 'needs-you' || t.state === 'blocked').length : 0
+  const task = ws && openTask ? ws.tasks.find((t) => t.id === openTask) ?? null : null
 
   return (
     <div className="shell">
       <nav className="rail" aria-label="Khu vực">
-        <div className="rail__mark">L</div>
+        <button className="rail__mark" aria-label="Về bàn của tôi" onClick={() => visit(me.id)}>W</button>
         {NAV.map(({ id, label, Icon }) => (
           <button
             key={id}
@@ -93,42 +129,29 @@ export default function App() {
             onClick={() => go(id)}
           >
             <Icon />
-            {id === 'desk' && waiting > 0 && <span className="rail__badge">{waiting}</span>}
+            {id === 'desk' && ws?.isMine && waiting > 0 && <span className="rail__badge">{waiting}</span>}
             <span className="rail__tip">{label}</span>
           </button>
         ))}
         <div className="rail__spacer" />
-        <button className="rail__btn" aria-label={ws.registry.owner.name}>
-          <span
-            style={{
-              width: 27,
-              height: 27,
-              borderRadius: 9,
-              background: 'var(--ink-high)',
-              border: '1px solid var(--line)',
-              display: 'grid',
-              placeItems: 'center',
-              fontSize: 12,
-              fontWeight: 600,
-              color: 'var(--fg-2)',
-            }}
-          >
-            {ws.registry.owner.name[0]}
+        <button className="rail__btn" aria-label={`Đăng xuất ${me.name}`} onClick={signOut}>
+          <span className="avatar avatar--sm">
+            {me.avatarUrl ? <img src={me.avatarUrl} alt="" referrerPolicy="no-referrer" /> : me.name[0]}
           </span>
-          <span className="rail__tip">
-            {ws.registry.owner.name} · {ws.registry.owner.team}
-          </span>
+          <span className="rail__tip">{me.name} · Đăng xuất</span>
         </button>
       </nav>
 
       <div className="main">
         <header className="topbar">
-          <span className="topbar__title">Bàn điều phối</span>
-          <span className="topbar__sub">
-            {ws.registry.week.label} · {ws.tasks.length} việc đang theo dõi
-          </span>
+          <span className="topbar__title">{view === 'team' ? 'Đội ngũ' : ws && !ws.isMine ? `Bàn của ${ws.owner.name}` : 'Bàn điều phối'}</span>
+          {ws && view !== 'team' && (
+            <span className="topbar__sub">
+              {ws.week.label} · {ws.tasks.length} việc đang theo dõi
+            </span>
+          )}
           <span className="topbar__spacer" />
-          {waiting > 0 && (
+          {ws?.isMine && waiting > 0 && view !== 'team' && (
             <span className="pill" style={{ color: 'var(--needs)', borderColor: 'var(--needs-dim)', background: 'var(--needs-dim)' }}>
               {waiting} việc cần bạn
             </span>
@@ -136,18 +159,33 @@ export default function App() {
           <span className="clock">{clock(now.toISOString())}</span>
         </header>
 
-        <div key={task ? `task-${task.id}` : view} className="fadein">
+        {ws && !ws.isMine && view !== 'team' && (
+          <div className="viewing" role="status">
+            <span className="avatar avatar--xs">
+              {ws.owner.avatarUrl ? <img src={ws.owner.avatarUrl} alt="" referrerPolicy="no-referrer" /> : ws.owner.name[0]}
+            </span>
+            Đang xem không gian của <strong>{ws.owner.name}</strong> · chỉ đọc
+            <button className="viewing__back" onClick={() => visit(me.id)}>Về bàn của tôi</button>
+          </div>
+        )}
+
+        {err && (
+          <div className="banner banner--bad" role="alert">
+            {err}
+            <button onClick={refresh}>Thử lại</button>
+          </div>
+        )}
+
+        {view === 'team' ? (
+          <Team people={people} meId={me.id} now={now} onVisit={visit} />
+        ) : !ws ? (
+          <div className="loading">đang đọc dữ liệu…</div>
+        ) : (
+          <div key={task ? `task-${task.id}` : `${viewing}-${view}`} className="fadein">
             {task ? (
-              <TaskSpace task={task} onBack={() => setOpenTask(null)} onFire={fire} />
+              <TaskSpace task={task} readOnly={readOnly} backLabel={ws.isMine ? 'Bàn điều phối' : `Bàn của ${ws.owner.name}`} onBack={() => setOpenTask(null)} onFire={fire} />
             ) : view === 'desk' ? (
-              <Desk
-                tasks={ws.tasks}
-                activity={ws.activity}
-                booted={booted}
-                now={now}
-                onOpen={setOpenTask}
-                onFire={fire}
-              />
+              <Desk tasks={ws.tasks} activity={ws.activity} booted={booted} now={now} readOnly={readOnly} who={who} onOpen={setOpenTask} onFire={fire} />
             ) : view === 'schedule' ? (
               <Schedule tasks={ws.tasks} now={now} />
             ) : view === 'connections' ? (
@@ -155,31 +193,18 @@ export default function App() {
             ) : (
               <Reflect reflect={ws.reflect} tasks={ws.tasks} />
             )}
-        </div>
+          </div>
+        )}
       </div>
 
       <AnimatePresence>
         {toast && (
           <motion.div
+            className="toast"
             initial={{ opacity: 0, y: 14 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
             transition={{ duration: 0.26, ease: [0.22, 1, 0.36, 1] }}
-            style={{
-              position: 'fixed',
-              left: 'calc(var(--rail) + 40px)',
-              bottom: 30,
-              zIndex: 60,
-              display: 'flex',
-              alignItems: 'center',
-              gap: 10,
-              padding: '12px 17px',
-              borderRadius: 11,
-              background: 'var(--ink-high)',
-              border: '1px solid var(--line)',
-              boxShadow: '0 14px 36px rgba(0,0,0,.5)',
-              fontSize: 14,
-            }}
           >
             <span className="lamp lamp--run">
               <span className="lamp__dot" />

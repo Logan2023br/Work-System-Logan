@@ -1,24 +1,35 @@
 import type { TaskState } from './types'
 
-const DAYS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']
+const TZ = 'Asia/Ho_Chi_Minh'
+const parts = (iso: string) => {
+  const p = Object.fromEntries(
+    new Intl.DateTimeFormat('en-GB', { timeZone: TZ, weekday: 'short', day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' })
+      .formatToParts(new Date(iso))
+      .map((x) => [x.type, x.value]),
+  )
+  return { wd: p.weekday as string, d: p.day as string, m: p.month as string, hh: p.hour as string, mm: p.minute as string }
+}
+const WD: Record<string, string> = { Sun: 'CN', Mon: 'T2', Tue: 'T3', Wed: 'T4', Thu: 'T5', Fri: 'T6', Sat: 'T7' }
 
 export function clock(iso: string): string {
-  const d = new Date(iso)
-  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`
+  const p = parts(iso)
+  return `${p.hh}:${p.mm}`
 }
 
-export function dayAndClock(iso: string): string {
-  const d = new Date(iso)
-  return `${DAYS[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1} · ${clock(iso)}`
+export function dayAndClock(iso: string | null): string {
+  if (!iso) return 'chưa có lịch'
+  const p = parts(iso)
+  return `${WD[p.wd]} ${p.d}/${p.m} · ${p.hh}:${p.mm}`
 }
 
 export function shortDate(iso: string): string {
-  const d = new Date(iso)
-  return `${d.getDate()}/${d.getMonth() + 1}`
+  const p = parts(iso.length === 10 ? `${iso}T12:00:00+07:00` : iso)
+  return `${p.d}/${p.m}`
 }
 
 /** "2 giờ trước", "hôm qua" — mốc thời gian tương đối, tiếng Việt. */
-export function ago(iso: string, now: Date): string {
+export function ago(iso: string | null, now: Date): string {
+  if (!iso) return 'chưa chạy lần nào'
   const mins = Math.round((now.getTime() - new Date(iso).getTime()) / 60000)
   if (mins < 1) return 'vừa xong'
   if (mins < 60) return `${mins} phút trước`
@@ -30,9 +41,10 @@ export function ago(iso: string, now: Date): string {
 }
 
 /** Đếm ngược tới lần chạy kế tiếp. */
-export function until(iso: string, now: Date): string {
+export function until(iso: string | null, now: Date): string {
+  if (!iso) return '—'
   const secs = Math.round((new Date(iso).getTime() - now.getTime()) / 1000)
-  if (secs <= 0) return 'đang tới'
+  if (secs <= 0) return 'đến hạn'
   const d = Math.floor(secs / 86400)
   const h = Math.floor((secs % 86400) / 3600)
   const m = Math.floor((secs % 3600) / 60)

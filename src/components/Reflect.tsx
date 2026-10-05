@@ -1,6 +1,16 @@
 import type { Reflect as ReflectData, Task } from '../lib/types'
 
-export default function Reflect({ reflect, tasks }: { reflect: ReflectData; tasks: Task[] }) {
+export default function Reflect({ reflect, tasks }: { reflect: ReflectData | null; tasks: Task[] }) {
+  if (!reflect) {
+    return (
+      <div className="wrap">
+        <header className="pagehead">
+          <h1 className="sec">Nhìn lại tuần</h1>
+          <p className="sec__note">Chưa có báo cáo tuần nào. Claude sẽ nộp báo cáo khi task "bao-cao-tuan" chạy, thường vào chiều thứ 6.</p>
+        </header>
+      </div>
+    )
+  }
   const name = (id: string) => tasks.find((t) => t.id === id)?.name ?? id
 
   const cols = [
@@ -13,7 +23,7 @@ export default function Reflect({ reflect, tasks }: { reflect: ReflectData; task
     <div className="wrap">
       <header className="pagehead">
         <h1 className="sec">Nhìn lại tuần {reflect.week}</h1>
-        <p className="sec__note">{reflect.range} · tổng hợp từ cả bốn task</p>
+        <p className="sec__note">{reflect.range} · tổng hợp từ {tasks.length} task</p>
       </header>
 
       <article className="paper rise">

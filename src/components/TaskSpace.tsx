@@ -50,7 +50,19 @@ function RunRow({ run }: { run: Run }) {
   )
 }
 
-export default function TaskSpace({ task, onBack, onFire }: { task: Task; onBack: () => void; onFire: (t: Task) => void }) {
+export default function TaskSpace({
+  task,
+  readOnly,
+  backLabel,
+  onBack,
+  onFire,
+}: {
+  task: Task
+  readOnly: boolean
+  backLabel: string
+  onBack: () => void
+  onFire: (t: Task) => void
+}) {
   const [tab, setTab] = useState<Tab>('Báo cáo')
   const t = tone(task.state)
 
@@ -58,7 +70,7 @@ export default function TaskSpace({ task, onBack, onFire }: { task: Task; onBack
     <div className="wrap space">
       <div className="space__top">
         <button className="back" onClick={onBack}>
-          <IconBack /> Bàn điều phối
+          <IconBack /> {backLabel}
         </button>
         <div style={{ flex: 1, minWidth: 0 }}>
           <h1 className="space__name">{task.name}</h1>
@@ -72,9 +84,11 @@ export default function TaskSpace({ task, onBack, onFire }: { task: Task; onBack
             </span>
           </div>
         </div>
-        <div className="space__act">
-          <Key label={task.action.label} kind={task.action.kind} tone={t} onPress={() => onFire(task)} />
-        </div>
+        {!readOnly && (
+          <div className="space__act">
+            <Key label={task.action.label} kind={task.action.kind} tone={t} onPress={() => onFire(task)} />
+          </div>
+        )}
       </div>
 
       <div className="tabs" role="tablist">
@@ -89,21 +103,30 @@ export default function TaskSpace({ task, onBack, onFire }: { task: Task; onBack
       <div key={tab} className="rise">
           {tab === 'Báo cáo' && (
             <div className="cols">
+              {!task.report.headline && task.report.body.length === 0 ? (
+                <article className="paper">
+                  <p className="paper__lede">Chưa có báo cáo. Báo cáo xuất hiện sau lần chạy đầu tiên.</p>
+                </article>
+              ) : (
               <article className="paper">
                 <p className="paper__lede">{task.report.headline}</p>
                 {task.report.body.map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
-                <hr />
-                <h3>Đang tắc ở đâu</h3>
-                <ul className="plist plist--bad">
-                  {task.report.blockers.map((b, i) => (
-                    <li key={i}>
-                      <span className="plist__mark">!</span>
-                      {b}
-                    </li>
-                  ))}
-                </ul>
+                {task.report.blockers.length > 0 && (
+                  <>
+                    <hr />
+                    <h3>Đang tắc ở đâu</h3>
+                    <ul className="plist plist--bad">
+                      {task.report.blockers.map((b, i) => (
+                        <li key={i}>
+                          <span className="plist__mark">!</span>
+                          {b}
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                )}
                 <h3>Nên làm gì tiếp</h3>
                 <ul className="plist">
                   {task.report.next.map((n, i) => (
@@ -114,6 +137,7 @@ export default function TaskSpace({ task, onBack, onFire }: { task: Task; onBack
                   ))}
                 </ul>
               </article>
+              )}
               <div className="figs">
                 {task.metrics.map((m, i) => (
                   <div key={i} className="fig">
@@ -182,7 +206,7 @@ export default function TaskSpace({ task, onBack, onFire }: { task: Task; onBack
 
           {tab === 'Lần chạy' && (
             <div>
-              <p className="sec__note">Bấm vào một dòng để xem nhật ký từng bước.</p>
+              <p className="sec__note">{task.runs.length === 0 ? 'Chưa có lần chạy nào.' : 'Bấm vào một dòng để xem nhật ký từng bước.'}</p>
               {task.runs.map((r, i) => (
                 <RunRow key={i} run={r} />
               ))}
