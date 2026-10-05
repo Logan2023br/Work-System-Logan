@@ -15,7 +15,11 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     return v
   }
   const publicUrl = need('PUBLIC_URL').replace(/\/+$/, '')
-  const isLocal = publicUrl.startsWith('http://localhost') || publicUrl.startsWith('http://127.0.0.1')
+  const url = new URL(publicUrl)
+  const isLocal = url.protocol === 'http:' && (url.hostname === 'localhost' || url.hostname === '127.0.0.1')
+  if (env.DEV_LOGIN && (env.VERCEL || env.NODE_ENV === 'production')) {
+    throw new Error('DEV_LOGIN không được đặt trên môi trường production/Vercel — hãy xóa biến này')
+  }
   return {
     publicUrl,
     allowedDomain: (env.ALLOWED_DOMAIN ?? 'bravebits.vn').toLowerCase(),

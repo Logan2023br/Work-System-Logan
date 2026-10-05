@@ -21,9 +21,19 @@ export type AppEnv = { Variables: { user: User } }
 
 export const sessionCookieName = (cfg: Config) => (cfg.secureCookies ? '__Host-ws_session' : 'ws_session')
 
+const SAFE_BASE = 'https://work-system.invalid'
+
+/** Chỉ nhận đường dẫn nội bộ. Ký tự điều khiển (tab, xuống dòng…) và dấu \ bị từ chối vì trình duyệt bỏ qua/đổi chúng khi phân tích URL. */
 export function safeNext(n: string | undefined): string {
-  if (!n || !n.startsWith('/') || n.startsWith('//') || n.startsWith('/\\')) return '/'
-  return n
+  if (!n || !n.startsWith('/') || /[\x00-\x1f\x7f\\]/.test(n)) return '/'
+  let url: URL
+  try {
+    url = new URL(n, SAFE_BASE)
+  } catch {
+    return '/'
+  }
+  if (url.origin !== SAFE_BASE) return '/'
+  return url.pathname + url.search + url.hash
 }
 
 export function requireUser(deps: AppDeps): MiddlewareHandler<AppEnv> {

@@ -264,3 +264,6 @@ button.rail__mark:active { transform: translateY(1px); }
   text-underline-offset: 3px;
 }
 .login__dev:hover { color: var(--on-paper); }
+
+/* sparkline chưa đủ dữ liệu: một đường kẻ mờ thay cho biểu đồ */
+.spark--empty { height: 30px; border-bottom: 1px dashed var(--line); opacity: .7; }

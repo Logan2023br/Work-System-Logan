@@ -37,7 +37,10 @@ async function loggedIn(over = {}) {
 }
 
 describe('safeNext', () => {
-  it.each([[undefined, '/'], ['/x?y=1', '/x?y=1'], ['//evil.com', '/'], ['/\\evil.com', '/'], ['https://evil.com', '/'], ['x', '/']])('%s → %s', (a, b) =>
+  it.each([
+    [undefined, '/'], ['/x?y=1', '/x?y=1'], ['/team#a', '/team#a'], ['//evil.com', '/'], ['/\\evil.com', '/'], ['https://evil.com', '/'], ['x', '/'],
+    ['/\t/evil.com', '/'], ['/\n/x', '/'], ['/a\\b', '/'], ['/\u0000', '/'],
+  ])('%s → %s', (a, b) =>
     expect(safeNext(a)).toBe(b))
 })
 

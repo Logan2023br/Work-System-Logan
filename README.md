@@ -8,7 +8,7 @@ Thiết kế: `docs/superpowers/specs/2026-10-05-work-system-multi-user-design.m
 
 ```bash
 npm install
-cp .env.example .env      # DEV_LOGIN=1 cho phép đăng nhập không cần Google trên localhost
+cp .env.example .env      # bỏ dấu # trước DEV_LOGIN=1 để đăng nhập không cần Google trên localhost
 npm run seed -- --demo    # dừng `npm run dev` trước khi seed (PGlite chỉ mở được một lần)
 npm run dev               # http://localhost:5173
 ```
@@ -26,7 +26,7 @@ Test: `npm test` · Kiểm tra kiểu: `npm run typecheck`
 3. **Database:** tab *Storage* → *Create Database* → Neon Postgres (Free) → *Connect* vào project. Vercel tự thêm `DATABASE_URL`.
 4. **Biến môi trường (Production + Preview):**
    `PUBLIC_URL=https://<domain>` · `ALLOWED_DOMAIN=bravebits.vn` · `ADMIN_EMAILS=tutnv@bravebits.vn` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET`. **Không** đặt `DEV_LOGIN`.
-5. **Deploy:** push lên nhánh chính. Lệnh `vercel-build` tự chạy migration rồi build.
+5. **Deploy:** push lên nhánh chính. Lệnh `vercel-build` tự chạy migration (chỉ trên bản production, bản preview bỏ qua) rồi build.
 6. **Nạp dữ liệu mẫu (một lần):** `DATABASE_URL=<chuỗi Neon> npm run seed`.
 
 ## Cấu trúc

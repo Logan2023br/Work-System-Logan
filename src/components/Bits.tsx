@@ -1,3 +1,4 @@
+import { sparkGeometry } from '../lib/spark'
 import { useEffect, useRef, useState } from 'react'
 import { TONE_HEX } from '../lib/format'
 import { IconPlay, IconCheck, IconWrench } from './Icons'
@@ -49,15 +50,9 @@ export function Meter({ value, tone, booted }: { value: number; tone: Tone; boot
 export function Sparkline({ data, tone, booted }: { data: number[]; tone: Tone; booted: boolean }) {
   const w = 100
   const h = 30
-  const max = Math.max(...data, 1)
-  const min = Math.min(...data, 0)
-  const span = max - min || 1
-  const pt = (v: number, i: number) => [
-    (i / (data.length - 1)) * w,
-    h - 3 - ((v - min) / span) * (h - 7),
-  ]
-  const path = data.map((v, i) => `${i ? 'L' : 'M'}${pt(v, i)[0].toFixed(2)},${pt(v, i)[1].toFixed(2)}`).join(' ')
-  const last = pt(data[data.length - 1], data.length - 1)
+  const g = sparkGeometry(data, w, h)
+  if (!g) return <div className="spark spark--empty" aria-hidden />
+  const { path, last } = g
   const c = TONE_HEX[tone]
 
   return (
