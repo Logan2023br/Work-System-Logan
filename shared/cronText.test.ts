@@ -10,6 +10,7 @@ describe('describeCron', () => {
     ['0 6,12,18 * * 1,3,5', '06:00, 12:00 và 18:00 · T2, T4, T6'],
     ['*/15 8-18 * * 1-5', 'mỗi 15 phút, 08:00–18:59 · T2–T6'],
     ['0 * * * *', 'mỗi giờ, phút 00 · mỗi ngày'],
+    ['*/15 9,14 * * *', 'mỗi 15 phút trong các giờ 09, 14 · mỗi ngày'],
   ])('%s → %s', (e, t) => expect(describeCron(e)).toBe(t))
 
   it('có ngày-trong-tháng hoặc tháng → null (hiển thị cron thô)', () => {

@@ -97,8 +97,9 @@ function Chart({ data }: { data: ChartData }) {
   }, [asTable])
   const H = 220
   const P = { l: 44, r: 64, t: 14, b: 28 }
+  const series = data.series.slice(0, SERIES.length)
   const n = data.labels.length
-  const all = data.series.flatMap((s) => s.values)
+  const all = series.flatMap((s) => s.values)
   const max = Math.max(0, ...all)
   const min = Math.min(0, ...all)
   const span = max - min || 1
@@ -108,9 +109,11 @@ function Chart({ data }: { data: ChartData }) {
   const band = iw / Math.max(n, 1)
   const cx = (i: number) => (data.kind === 'line' ? P.l + (n <= 1 ? iw / 2 : (i / (n - 1)) * iw) : P.l + band * i + band / 2)
   const ticks = [min, min + span / 2, max]
-  const k = data.series.length
+  const k = series.length
   const group = band * 0.7
   const bw = Math.max(2, (group - 2 * (k - 1)) / k)
+
+  if (n === 0) return <p className="sec__note">Biểu đồ chưa có dữ liệu.</p>
 
   const bar = (x: number, v: number) => {
     const y0 = y(0)
@@ -123,7 +126,7 @@ function Chart({ data }: { data: ChartData }) {
   if (asTable) {
     return (
       <>
-        <Table columns={['', ...data.series.map((s) => s.name)]} rows={data.labels.map((l, i) => [l, ...data.series.map((s) => s.values[i])])} />
+        <Table columns={['', ...series.map((s) => s.name)]} rows={data.labels.map((l, i) => [l, ...series.map((s) => s.values[i])])} />
         <button className="blk__toggle" onClick={() => setAsTable(false)}>Xem biểu đồ</button>
       </>
     )
@@ -133,8 +136,8 @@ function Chart({ data }: { data: ChartData }) {
     <div className="blk__chart">
       {k >= 2 && (
         <ul className="blk__legend">
-          {data.series.map((s, i) => (
-            <li key={s.name}>
+          {series.map((s, i) => (
+            <li key={i}>
               <span className="blk__swatch" style={{ background: SERIES[i] }} />
               {s.name}
             </li>
@@ -142,7 +145,7 @@ function Chart({ data }: { data: ChartData }) {
         </ul>
       )}
       <div className="blk__plot" ref={plot}>
-        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={`Biểu đồ ${data.kind === 'line' ? 'đường' : 'cột'}: ${data.series.map((s) => s.name).join(', ')}`} onMouseLeave={() => setHover(null)}>
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={`Biểu đồ ${data.kind === 'line' ? 'đường' : 'cột'}: ${series.map((s) => s.name).join(', ')}`} onMouseLeave={() => setHover(null)}>
           {ticks.map((t, i) => (
             <g key={i}>
               <line x1={P.l} x2={W - P.r} y1={y(t)} y2={y(t)} className="blk__grid" />
@@ -155,15 +158,15 @@ function Chart({ data }: { data: ChartData }) {
             ) : null,
           )}
           {data.kind === 'line'
-            ? data.series.map((s, si) => (
-                <g key={s.name}>
+            ? series.map((s, si) => (
+                <g key={si}>
                   <path d={s.values.map((v, i) => `${i ? 'L' : 'M'}${cx(i)},${y(v)}`).join(' ')} fill="none" stroke={SERIES[si]} strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
                   <circle cx={cx(n - 1)} cy={y(s.values[n - 1])} r={4} fill={SERIES[si]} stroke="var(--ink-raised)" strokeWidth={2} />
                   <text x={cx(n - 1) + 8} y={y(s.values[n - 1]) + 4} className="blk__direct">{fmt.format(s.values[n - 1])}</text>
                 </g>
               ))
-            : data.series.map((s, si) => (
-                <g key={s.name}>
+            : series.map((s, si) => (
+                <g key={si}>
                   {s.values.map((v, i) => (
                     <path key={i} d={bar(cx(i) - group / 2 + si * (bw + 2), v)} fill={SERIES[si]} opacity={hover === null || hover === i ? 1 : 0.45} />
                   ))}
@@ -172,7 +175,7 @@ function Chart({ data }: { data: ChartData }) {
           {hover !== null && data.kind === 'line' && <line x1={cx(hover)} x2={cx(hover)} y1={P.t} y2={P.t + ih} className="blk__cross" />}
           {hover !== null &&
             data.kind === 'line' &&
-            data.series.map((s, si) => <circle key={si} cx={cx(hover)} cy={y(s.values[hover])} r={4} fill={SERIES[si]} stroke="var(--ink-raised)" strokeWidth={2} />)}
+            series.map((s, si) => <circle key={si} cx={cx(hover)} cy={y(s.values[hover])} r={4} fill={SERIES[si]} stroke="var(--ink-raised)" strokeWidth={2} />)}
           {data.labels.map((_, i) => (
             <rect key={i} x={cx(i) - band / 2} y={P.t} width={band} height={ih} fill="transparent" onMouseEnter={() => setHover(i)} />
           ))}
@@ -180,7 +183,7 @@ function Chart({ data }: { data: ChartData }) {
         {hover !== null && (
           <div className="blk__tip" style={{ left: `${(cx(hover) / W) * 100}%` }}>
             <div className="blk__tip-h">{data.labels[hover]}</div>
-            {data.series.map((s, si) => (
+            {series.map((s, si) => (
               <div key={si} className="blk__tip-row">
                 <span className="blk__swatch" style={{ background: SERIES[si] }} />
                 <span>{s.name}</span>

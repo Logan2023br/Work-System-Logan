@@ -73,10 +73,16 @@ export default function Schedule({
 }) {
   const [editing, setEditing] = useState<string | null>(null)
   const [pausing, setPausing] = useState<Record<string, boolean>>({})
+  const [busy, setBusy] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    setPausing((s) => Object.fromEntries(Object.entries(s).filter(([id, v]) => tasks.find((t) => t.id === id)?.paused !== v)))
+  }, [tasks])
 
   async function togglePause(t: Task) {
+    if (busy[t.id]) return
     const next = !(pausing[t.id] ?? t.paused)
     setPausing((s) => ({ ...s, [t.id]: next }))
+    setBusy((s) => ({ ...s, [t.id]: true }))
     try {
       await savePaused(t.id, next)
       onToast(next ? `Đã tạm dừng "${t.name}"` : `"${t.name}" chạy lại theo lịch`)
@@ -84,8 +90,11 @@ export default function Schedule({
     } catch (e) {
       setPausing((s) => ({ ...s, [t.id]: !next }))
       onToast((e as Error).message)
+    } finally {
+      setBusy((s) => ({ ...s, [t.id]: false }))
     }
   }
+
   const today = (now.getDay() + 6) % 7
 
   return (
@@ -124,7 +133,7 @@ export default function Schedule({
 
           {tasks.flatMap((task) =>
             weekSlots(task.cron)
-              .filter((s) => s.hour >= FROM && s.hour <= TO && !task.paused)
+              .filter((s) => s.hour >= FROM && s.hour <= TO && !(pausing[task.id] ?? task.paused))
               .map((s, i) => {
                 const top = ((s.hour + s.min / 60 - FROM) / (TO - FROM)) * 100
                 return (

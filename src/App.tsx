@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import type { ReactElement } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Me, MyConnections, Person, Task, Workspace } from './lib/types'
@@ -59,17 +59,24 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
   const [now, setNow] = useState(new Date())
   const [toast, setToast] = useState<string | null>(null)
 
+  const seq = useRef(0)
   const refresh = useCallback(() => {
+    const mine = ++seq.current
     Promise.all([loadWorkspace(viewing), loadPeople(), viewing === me.id ? loadMyConnections() : Promise.resolve(null)])
       .then(([w, p, cl]) => {
+        if (mine !== seq.current) return // đã chuyển sang người khác — bỏ phản hồi cũ
         setWs(w)
         setPeople(p)
         setClaude(cl)
         setErr(null)
       })
       .catch((e: unknown) => {
+        if (mine !== seq.current) return
         if (e instanceof ApiError && e.status === 401) window.location.href = '/login'
-        else setErr((e as Error).message)
+        else if (e instanceof ApiError && e.status === 404 && viewing !== me.id) {
+          setToast('Không mở được bàn này — quay về bàn của bạn')
+          setViewing(me.id)
+        } else setErr((e as Error).message)
       })
   }, [viewing, me.id])
 

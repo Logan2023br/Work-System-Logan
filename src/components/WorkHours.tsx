@@ -11,13 +11,14 @@ export function WorkHoursEditor({ me, onSaved, onToast }: { me: Me; onSaved: (m:
   const [start, setStart] = useState(me.workStart)
   const [end, setEnd] = useState(me.workEnd)
   const [saving, setSaving] = useState(false)
-  const dirty = days.join() !== me.workDays.join() || start !== me.workStart || end !== me.workEnd
+  const sorted = [...days].sort((a, b) => a - b)
+  const dirty = sorted.join() !== [...me.workDays].sort((a, b) => a - b).join() || start !== me.workStart || end !== me.workEnd
   const valid = days.length > 0 && start < end
 
   async function save() {
     setSaving(true)
     try {
-      onSaved(await saveWorkHours({ workDays: days, workStart: start, workEnd: end }))
+      onSaved(await saveWorkHours({ workDays: sorted, workStart: start, workEnd: end }))
       onToast('Đã lưu khung giờ Điều phối')
     } catch (e) {
       onToast((e as Error).message)

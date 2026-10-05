@@ -27,7 +27,12 @@ export function describeCron(expr: string): string | null {
   if (!mins.length || !hours.length || !d) return null
   if ((m !== '*' && !/^\d/.test(m)) || m.includes('/')) {
     const step = Number(m.split('/')[1])
-    if (m.startsWith('*/') && step > 0) return `mỗi ${step} phút, ${pad(hours[0])}:00–${pad(hours.at(-1)!)}:59 · ${d}`
+    if (m.startsWith('*/') && step > 0) {
+      const contiguous = hours.every((hh, i) => i === 0 || hh === hours[i - 1] + 1)
+      return contiguous
+        ? `mỗi ${step} phút, ${pad(hours[0])}:00–${pad(hours.at(-1)!)}:59 · ${d}`
+        : `mỗi ${step} phút trong các giờ ${hours.map(pad).join(', ')} · ${d}`
+    }
   }
   if (h === '*' && mins.length === 1) return `mỗi giờ, phút ${pad(mins[0])} · ${d}`
   const times = hours.flatMap((hh) => mins.map((mm) => `${pad(hh)}:${pad(mm)}`))
