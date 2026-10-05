@@ -56,7 +56,7 @@ function Strip({
 
       <div className="strip__foot">
         <div className="strip__when">
-          <span>chạy {ago(task.lastRun, new Date())}</span>
+          <span>{task.lastRun ? `chạy ${ago(task.lastRun, new Date())}` : 'chưa chạy lần nào'}</span>
           <span>{task.scheduleLabel}</span>
         </div>
         {!readOnly && <Key label={task.action.label} kind={task.action.kind} tone={t} onPress={() => onFire(task)} />}

@@ -80,7 +80,7 @@ export default function TaskSpace({
               {task.mode === 'auto' ? 'Tự chạy' : 'Cần bạn duyệt'}
             </span>
             <span style={{ color: 'var(--fg-3)', fontSize: 13 }}>
-              {task.scheduleLabel} · chạy lần cuối {ago(task.lastRun, new Date())}
+              {task.scheduleLabel} · {task.lastRun ? `chạy lần cuối ${ago(task.lastRun, new Date())}` : 'chưa chạy lần nào'}
             </span>
           </div>
         </div>
