@@ -139,6 +139,7 @@ export const oauthClients = pgTable('oauth_clients', {
   name: text('name').notNull(),
   redirectUris: text('redirect_uris').array().notNull(),
   createdAt: ts('created_at').notNull().defaultNow(),
+  updatedAt: ts('updated_at').notNull().defaultNow(),
 })
 
 export const oauthCodes = pgTable('oauth_codes', {
@@ -157,6 +158,7 @@ export const oauthTokens = pgTable('oauth_tokens', {
   userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
   clientId: text('client_id').notNull(),
   clientName: text('client_name').notNull(),
+  resource: text('resource').notNull(),
   accessHash: text('access_hash').notNull().unique(),
   refreshHash: text('refresh_hash').notNull().unique(),
   accessExpiresAt: ts('access_expires_at').notNull(),

@@ -97,3 +97,31 @@ describe('weeklyReportSchema', () => {
     expect(r.success).toBe(true)
   })
 })
+import { runReportSchema, weeklyReportInputSchema, zodMessage } from './schema.js'
+
+describe('runReportSchema', () => {
+  it('mặc định note rỗng, log rỗng; trường cập nhật đều tùy chọn', () => {
+    expect(runReportSchema.parse({ slug: 'a', status: 'ok' })).toEqual({ slug: 'a', status: 'ok', note: '', log: [] })
+  })
+  it('từ chối log quá 200 dòng hoặc dòng quá 500 ký tự', () => {
+    expect(runReportSchema.safeParse({ slug: 'a', status: 'ok', log: Array(201).fill('x') }).success).toBe(false)
+    expect(runReportSchema.safeParse({ slug: 'a', status: 'ok', log: ['x'.repeat(501)] }).success).toBe(false)
+  })
+  it('từ chối status lạ', () => {
+    expect(runReportSchema.safeParse({ slug: 'a', status: 'done' }).success).toBe(false)
+  })
+})
+
+describe('weeklyReportInputSchema', () => {
+  it('week tùy chọn', () => {
+    expect(weeklyReportInputSchema.parse({ summary: 's' }).week).toBeUndefined()
+  })
+})
+
+describe('zodMessage', () => {
+  it('ghi rõ đường dẫn trường', () => {
+    const r = runReportSchema.safeParse({ slug: 'A B', status: 'ok' })
+    expect(r.success).toBe(false)
+    expect(zodMessage(r.error!)).toMatch(/^slug: /)
+  })
+})

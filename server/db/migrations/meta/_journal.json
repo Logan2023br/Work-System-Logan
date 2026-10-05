@@ -8,6 +8,13 @@
       "when": 1791173881049,
       "tag": "0000_colossal_cardiac",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791176480676,
+      "tag": "0001_gray_golden_guardian",
+      "breakpoints": true
     }
   ]
 }

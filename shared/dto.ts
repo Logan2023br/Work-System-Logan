@@ -122,3 +122,14 @@ export interface WorkspaceDTO {
   connections: ConnectionDTO[]
   reflect: ReflectDTO | null
 }
+export interface ClaudeLinkDTO {
+  id: string
+  clientName: string
+  createdAt: string
+  lastUsedAt: string | null
+}
+
+export interface MyConnectionsDTO {
+  connectorUrl: string
+  links: ClaudeLinkDTO[]
+}

@@ -183,3 +183,30 @@ export type TaskDefinition = z.output<typeof taskDefinitionSchema>
 export type TaskPatch = z.output<typeof taskPatchSchema>
 export type ReflectNote = z.output<typeof reflectNoteSchema>
 export type WeeklyReportInput = z.output<typeof weeklyReportSchema>
+export const runReportSchema = z.object({
+  slug: slugSchema,
+  status: z.enum(RUN_STATUSES),
+  note: text(500).default(''),
+  log: z
+    .array(z.string().max(LIMITS.logLineChars, `Mỗi dòng log tối đa ${LIMITS.logLineChars} ký tự`))
+    .max(LIMITS.logLines, `Log tối đa ${LIMITS.logLines} dòng`)
+    .default([]),
+  durationMs: z.number().int().min(0).max(24 * 3_600_000).optional(),
+  state: z.enum(TASK_STATES).optional(),
+  stateLabel: text(60).optional(),
+  health: z.number().min(0).max(1).optional(),
+  progress: progressSchema.optional(),
+  metrics: z.array(metricSchema).max(LIMITS.metrics).optional(),
+  trendThem: z.array(z.number()).max(LIMITS.trend).optional(),
+  milestones: z.array(milestoneSchema).max(LIMITS.milestones).optional(),
+  blocks: blocksSchema.optional(),
+  report: taskReportSchema.optional(),
+})
+export type RunReport = z.output<typeof runReportSchema>
+
+export const weeklyReportInputSchema = weeklyReportSchema.extend({ week: weeklyReportSchema.shape.week.optional() })
+export type WeeklyReportInputOptionalWeek = z.output<typeof weeklyReportInputSchema>
+
+export function zodMessage(e: z.ZodError): string {
+  return e.issues.map((i) => `${i.path.length ? i.path.join('.') : '(gốc)'}: ${i.message}`).join('; ')
+}

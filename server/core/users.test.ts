@@ -81,7 +81,7 @@ describe('deactivateUser', () => {
     const u = await makeUser(db)
     const s = await createSession(db, u.id, now)
     await db.insert(oauthTokens).values({
-      userId: u.id, clientId: 'c', clientName: 'Claude', accessHash: 'a', refreshHash: 'r',
+      userId: u.id, clientId: 'c', clientName: 'Claude', resource: 'https://ws.test/mcp', accessHash: 'a', refreshHash: 'r',
       accessExpiresAt: now, refreshExpiresAt: now,
     })
     await deactivateUser(db, admin, u.id, now)
