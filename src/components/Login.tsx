@@ -5,6 +5,7 @@ const REASONS: Record<string, string> = {
   state: 'Phiên đăng nhập đã hết hạn, thử lại nhé.',
   cancelled: 'Bạn đã hủy đăng nhập.',
   google: 'Google không phản hồi, thử lại sau ít phút.',
+  setup: 'Máy chủ chưa được cấu hình đăng nhập Google (thiếu GOOGLE_CLIENT_ID / GOOGLE_CLIENT_SECRET).',
 }
 
 export default function Login({ error }: { error: string | null }) {
@@ -30,6 +31,11 @@ export default function Login({ error }: { error: string | null }) {
           Đăng nhập bằng Google
         </a>
         <p className="login__fine">Chỉ dành cho tài khoản @bravebits.vn</p>
+        {import.meta.env.DEV && (
+          <a className="login__dev" href={`/auth/dev?email=tutnv@bravebits.vn&name=Logan&next=${encodeURIComponent(next)}`}>
+            Môi trường dev · đăng nhập nhanh không cần Google
+          </a>
+        )}
       </div>
     </main>
   )

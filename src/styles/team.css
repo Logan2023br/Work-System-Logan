@@ -254,3 +254,13 @@
 button.rail__mark { cursor: pointer; }
 button.rail__mark:hover { filter: brightness(1.08); }
 button.rail__mark:active { transform: translateY(1px); }
+
+.login__dev {
+  display: inline-block;
+  margin-top: 16px;
+  color: var(--on-paper-2);
+  font-size: 12.5px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.login__dev:hover { color: var(--on-paper); }

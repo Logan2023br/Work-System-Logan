@@ -75,6 +75,13 @@ describe('/auth/google', () => {
     expect(res.headers.get('location')).toBe('/login?error=domain')
   })
 
+  it('chưa cấu hình GOOGLE_CLIENT_ID → về /login?error=setup, không gửi sang Google', async () => {
+    const bare = createApp({ db, config: { ...config, googleClientId: '' }, google, now: () => now })
+    const res = await bare.request('/auth/google')
+    expect(res.status).toBe(302)
+    expect(res.headers.get('location')).toBe('/login?error=setup')
+  })
+
   it('/auth/dev không tồn tại khi devLogin=false', async () => {
     expect((await app.request('/auth/dev?email=an@bravebits.vn')).status).toBe(404)
   })

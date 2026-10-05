@@ -23,6 +23,7 @@ export function authRoutes(deps: AppDeps) {
   }
 
   r.get('/google', (c) => {
+    if (!config.googleClientId || !config.googleClientSecret) return c.redirect('/login?error=setup')
     const state = newToken()
     const verifier = newToken()
     setCookie(c, FLOW_COOKIE, JSON.stringify({ state, verifier, next: safeNext(c.req.query('next')) }), flowOpts)
