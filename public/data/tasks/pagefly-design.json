@@ -1,0 +1,62 @@
+{
+  "id": "pagefly-design",
+  "index": "02",
+  "name": "PageFly Design",
+  "summary": "Hệ thống sinh trang bằng AI — skill system v2, tách quyết định design sang TypeScript",
+  "mode": "auto",
+  "state": "running",
+  "stateLabel": "Đang chạy",
+  "health": 0.84,
+  "progress": { "done": 6, "total": 6, "unit": "file skill" },
+  "lastRun": "2026-09-21T06:00:00+07:00",
+  "nextRun": "2026-09-22T06:00:00+07:00",
+  "scheduleLabel": "06:00 mỗi ngày",
+  "cron": "0 6 * * *",
+  "action": { "label": "Chạy đo chất lượng", "kind": "run" },
+  "trend": [41, 44, 43, 47, 49, 48, 52, 51, 55, 54, 57, 56, 55, 55],
+  "trendLabel": "Phần trăm gap chất lượng do chip selection chiếm",
+  "metrics": [
+    { "label": "Gap chất lượng từ chip selection", "value": "55%", "note": "Nguyên nhân lớn nhất, đã ổn định 3 ngày" },
+    { "label": "Người dùng beta", "value": "18", "note": "Mời qua Crisp, 11 người đã tạo trang" },
+    { "label": "Trang sinh trong tuần", "value": "243", "note": "Tăng 31% so với tuần 38" }
+  ],
+  "milestones": [
+    { "title": "Skill system v2 — 6 file", "state": "done", "note": "Đã tách khỏi bản v1 một file", "date": "2026-09-08" },
+    { "title": "Tách quyết định design sang plan.ts / audit.ts", "state": "done", "note": "Quyết định giờ nằm trong TypeScript, không nằm trong prompt", "date": "2026-09-15" },
+    { "title": "Sửa chip selection", "state": "active", "note": "Chiếm ~55% gap chất lượng còn lại", "date": "2026-09-21" },
+    { "title": "Mở beta rộng qua Crisp", "state": "active", "note": "18/50 slot đã dùng", "date": "2026-09-24" },
+    { "title": "Trang marketing sản phẩm", "state": "todo", "note": "Chưa có nội dung", "date": "2026-10-05" }
+  ],
+  "sources": [
+    { "name": "Mixpanel — PageFly Design", "kind": "api", "location": "Mixpanel / Sinh trang & chất lượng", "status": "ok", "syncedAt": "2026-09-21T06:00:00+07:00" },
+    { "name": "Danh sách beta", "kind": "sheet", "location": "Sheets / PageFly Design beta", "status": "ok", "syncedAt": "2026-09-21T06:00:00+07:00" },
+    { "name": "Repo skill system", "kind": "local", "location": "~/Documents/PageFly-Design/PageFly-Design", "status": "ok", "syncedAt": "2026-09-21T06:00:00+07:00" },
+    { "name": "Hội thoại Crisp mời beta", "kind": "api", "location": "Crisp / Chiến dịch beta", "status": "ok", "syncedAt": "2026-09-21T06:00:00+07:00" }
+  ],
+  "runs": [
+    { "at": "2026-09-21T06:00:00+07:00", "status": "ok", "duration": "4m 38s", "note": "Đo 40 trang mẫu, gap chip selection 55%",
+      "log": ["Sinh 40 trang từ bộ prompt chuẩn", "Chấm điểm bằng audit.ts", "Phân rã nguyên nhân: chip 55%, spacing 19%, màu 14%, khác 12%", "Ghi kết quả vào Sheets"] },
+    { "at": "2026-09-20T06:00:00+07:00", "status": "ok", "duration": "4m 51s", "note": "Đo 40 trang mẫu, gap chip selection 55%",
+      "log": ["Sinh 40 trang từ bộ prompt chuẩn", "Chấm điểm bằng audit.ts", "Ghi kết quả vào Sheets"] },
+    { "at": "2026-09-19T06:00:00+07:00", "status": "ok", "duration": "4m 12s", "note": "Đo 40 trang mẫu, gap chip selection 56%",
+      "log": ["Sinh 40 trang từ bộ prompt chuẩn", "Chấm điểm bằng audit.ts", "Ghi kết quả vào Sheets"] }
+  ],
+  "report": {
+    "headline": "Chip selection đã được xác định là nút thắt chất lượng lớn nhất và con số đứng yên ba ngày — đủ chắc để bắt tay sửa.",
+    "body": [
+      "Việc tách quyết định design ra khỏi prompt và đưa vào plan.ts / audit.ts đã trả kết quả: chất lượng giờ đo được và phân rã được theo nguyên nhân, thay vì chỉ cảm nhận.",
+      "Phân rã ổn định quanh mức chip selection 55%, spacing 19%, màu 14%. Ba ngày liên tiếp cùng một hình dạng nghĩa là đây là lỗi hệ thống chứ không phải nhiễu mẫu.",
+      "Beta đang chạy chậm hơn dự kiến: 18 trên 50 slot, trong đó 11 người thực sự tạo trang. Lời mời qua Crisp có gửi nhưng tỉ lệ kích hoạt thấp."
+    ],
+    "blockers": [
+      "Chưa có bản sửa chip selection nào được thử — mới chỉ đo",
+      "Tỉ lệ kích hoạt beta thấp: 11 trên 18 người được mời",
+      "Trang marketing chưa có nội dung, sẽ chặn lúc mở rộng"
+    ],
+    "next": [
+      "Thử bản sửa chip selection đầu tiên, đo lại trên cùng 40 trang mẫu",
+      "Tìm hiểu vì sao 7 người nhận lời mời nhưng không tạo trang",
+      "Viết nội dung trang marketing"
+    ]
+  }
+}

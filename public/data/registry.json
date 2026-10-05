@@ -1,0 +1,10 @@
+{
+  "owner": { "name": "Logan", "email": "tutnv@bravebits.vn", "team": "BraveBits" },
+  "week": { "number": 39, "label": "Tuần 39", "from": "2026-09-21", "to": "2026-09-27" },
+  "tasks": [
+    { "id": "halloween-templates", "file": "tasks/halloween-templates.json" },
+    { "id": "pagefly-design",      "file": "tasks/pagefly-design.json" },
+    { "id": "upsell-q3",           "file": "tasks/upsell-q3.json" },
+    { "id": "weekly-report",       "file": "tasks/weekly-report.json" }
+  ]
+}

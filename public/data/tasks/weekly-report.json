@@ -1,0 +1,62 @@
+{
+  "id": "weekly-report",
+  "index": "04",
+  "name": "Báo cáo tuần BOO X LOGAN",
+  "summary": "Doc Google Drive theo tuần, tổng hợp KR từ cả ba mảng còn lại",
+  "mode": "review",
+  "state": "idle",
+  "stateLabel": "Chờ tới thứ 6",
+  "health": 0.71,
+  "progress": { "done": 3, "total": 4, "unit": "KR có số" },
+  "lastRun": "2026-09-19T16:00:00+07:00",
+  "nextRun": "2026-09-25T16:00:00+07:00",
+  "scheduleLabel": "16:00 thứ 6 hằng tuần",
+  "cron": "0 16 * * 5",
+  "action": { "label": "Dựng bản nháp tuần 39", "kind": "run" },
+  "trend": [4, 4, 3, 4, 4, 2, 4, 3, 4, 4, 4, 3, 3, 3],
+  "trendLabel": "Số KR có đủ số liệu mỗi tuần",
+  "metrics": [
+    { "label": "Upsell case", "value": "41", "note": "Chỉ tính System A, System B đang dừng" },
+    { "label": "Usage PageFly Design", "value": "243 trang", "note": "Tăng 31% so với tuần 38" },
+    { "label": "Fix ATC dưới 1h", "value": "86%", "note": "Dưới mục tiêu 90%" },
+    { "label": "Số ticket", "value": "127", "note": "Giảm 9% so với tuần 38" }
+  ],
+  "milestones": [
+    { "title": "Doc tuần 38", "state": "done", "note": "Đã gửi, đủ 4 KR", "date": "2026-09-19" },
+    { "title": "Thu số liệu tuần 39", "state": "active", "note": "3/4 KR có số, thiếu upsell System B", "date": "2026-09-25" },
+    { "title": "Dựng doc tuần 39", "state": "todo", "note": "Tự động lúc 16:00 thứ 6", "date": "2026-09-25" },
+    { "title": "Bạn duyệt và gửi", "state": "todo", "note": "Luôn cần người đọc trước khi gửi", "date": "2026-09-25" }
+  ],
+  "sources": [
+    { "name": "Doc báo cáo tuần", "kind": "doc", "location": "Drive / BOO X LOGAN / Tuần 39", "status": "ok", "syncedAt": "2026-09-19T16:00:00+07:00" },
+    { "name": "Bảng KR", "kind": "sheet", "location": "Sheets / BOO X LOGAN KR tracker", "status": "ok", "syncedAt": "2026-09-21T09:00:00+07:00" },
+    { "name": "Số ticket & ATC", "kind": "api", "location": "Crisp / Thống kê ticket", "status": "ok", "syncedAt": "2026-09-21T09:00:00+07:00" },
+    { "name": "Usage PageFly Design", "kind": "api", "location": "Mixpanel / Sinh trang", "status": "ok", "syncedAt": "2026-09-21T09:00:00+07:00" }
+  ],
+  "runs": [
+    { "at": "2026-09-19T16:00:00+07:00", "status": "ok", "duration": "1m 44s", "note": "Dựng doc tuần 38, đủ 4 KR",
+      "log": ["Đọc bảng KR", "Lấy số ticket và ATC từ Crisp", "Lấy usage từ Mixpanel", "Tạo doc trong Drive", "Chờ bạn duyệt"] },
+    { "at": "2026-09-12T16:00:00+07:00", "status": "ok", "duration": "1m 51s", "note": "Dựng doc tuần 37, đủ 4 KR",
+      "log": ["Đọc bảng KR", "Lấy số ticket và ATC từ Crisp", "Tạo doc trong Drive"] },
+    { "at": "2026-09-05T16:00:00+07:00", "status": "partial", "duration": "2m 30s", "note": "Thiếu số ATC, điền tay sau",
+      "log": ["Đọc bảng KR", "Crisp trả lỗi khi lấy ATC", "Tạo doc với 3 KR, để trống ATC"] }
+  ],
+  "report": {
+    "headline": "Ba trên bốn KR đã có số. Con số thiếu là upsell, và nó thiếu vì System B đang hỏng chứ không phải vì chưa thu thập.",
+    "body": [
+      "Doc tuần 38 đã gửi đủ bốn KR. Tuần 39 đang thu số và sẽ tự dựng bản nháp lúc 16:00 thứ 6, nhưng con số upsell sẽ không phản ánh đúng thực tế.",
+      "Fix ATC dưới 1 giờ đạt 86%, dưới mục tiêu 90% hai tuần liên tiếp. Đây là KR duy nhất đang đi sai hướng mà chưa có ai xử lý.",
+      "Số ticket giảm 9% — tin tốt, nhưng cần nói rõ trong doc là giảm do ít việc hay do khách bỏ cuộc không gửi nữa."
+    ],
+    "blockers": [
+      "Số upsell sẽ thiếu 3 ngày dữ liệu System B",
+      "ATC dưới mục tiêu hai tuần liền, chưa có ai nhận xử lý",
+      "Chưa rõ vì sao số ticket giảm — chưa diễn giải được"
+    ],
+    "next": [
+      "Ghi chú rõ khoảng trống System B trong doc tuần 39",
+      "Tìm nguyên nhân ATC trượt mục tiêu hai tuần",
+      "Bóc tách số ticket giảm theo loại để biết giảm ở đâu"
+    ]
+  }
+}

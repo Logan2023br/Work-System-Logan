@@ -1,0 +1,62 @@
+{
+  "id": "upsell-q3",
+  "index": "03",
+  "name": "Chiến dịch upsell Q3/2026",
+  "summary": "System A cho store sắp chạm slot limit, System B cho store free-plan lên gói — chạy trên n8n + Crisp",
+  "mode": "auto",
+  "state": "blocked",
+  "stateLabel": "Có lỗi",
+  "health": 0.38,
+  "progress": { "done": 1, "total": 2, "unit": "hệ thống chạy" },
+  "lastRun": "2026-09-21T09:30:00+07:00",
+  "nextRun": "2026-09-21T15:30:00+07:00",
+  "scheduleLabel": "09:30 và 15:30 mỗi ngày",
+  "cron": "30 9,15 * * *",
+  "action": { "label": "Xem lỗi System B", "kind": "fix" },
+  "trend": [22, 28, 31, 26, 34, 30, 19, 24, 29, 33, 27, 12, 8, 6],
+  "trendLabel": "Số tin nhắn upsell gửi mỗi ngày",
+  "metrics": [
+    { "label": "System A — sắp chạm slot", "value": "Đang chạy", "note": "41 store đã nhận tin trong tuần" },
+    { "label": "System B — free lên gói", "value": "Dừng", "note": "Enrichment AC2 trả về rỗng từ 19/9" },
+    { "label": "Tỉ lệ click coupon", "value": "12.4%", "note": "Trên 187 tin đã gửi trong Q3" }
+  ],
+  "milestones": [
+    { "title": "System A — store sắp chạm slot limit", "state": "done", "note": "Chạy ổn định từ 02/09", "date": "2026-09-02" },
+    { "title": "Chống trùng người nhận", "state": "done", "note": "Không ai nhận quá 1 tin trong 30 ngày", "date": "2026-09-05" },
+    { "title": "Gửi theo timezone của store", "state": "done", "note": "Gửi trong khung 09:00–18:00 giờ địa phương", "date": "2026-09-10" },
+    { "title": "System B — free-plan lên gói", "state": "active", "note": "Đang lỗi enrichment AC2", "date": "2026-09-19" },
+    { "title": "Báo cáo hiệu quả cuối Q3", "state": "todo", "note": "Cần đủ dữ liệu cả hai hệ thống", "date": "2026-09-30" }
+  ],
+  "sources": [
+    { "name": "Workflow n8n", "kind": "api", "location": "n8n / Upsell Q3 — System A & B", "status": "error", "syncedAt": "2026-09-21T09:30:00+07:00" },
+    { "name": "Hội thoại & coupon Crisp", "kind": "api", "location": "Crisp / Chiến dịch upsell", "status": "ok", "syncedAt": "2026-09-21T09:30:00+07:00" },
+    { "name": "Danh sách store mục tiêu", "kind": "sheet", "location": "Sheets / Upsell Q3 targets", "status": "ok", "syncedAt": "2026-09-21T09:30:00+07:00" },
+    { "name": "Theo dõi click", "kind": "api", "location": "Mixpanel / Upsell coupon click", "status": "ok", "syncedAt": "2026-09-21T09:30:00+07:00" }
+  ],
+  "runs": [
+    { "at": "2026-09-21T09:30:00+07:00", "status": "partial", "duration": "1m 07s", "note": "System A gửi 6 tin, System B không chạy",
+      "log": ["System A: lọc được 6 store sắp chạm slot", "System A: gửi 6 tin qua Crisp", "System B: gọi enrichment AC2", "System B: AC2 trả về 0 bản ghi — dừng workflow"] },
+    { "at": "2026-09-20T15:30:00+07:00", "status": "partial", "duration": "0m 58s", "note": "System A gửi 8 tin, System B không chạy",
+      "log": ["System A: gửi 8 tin", "System B: AC2 trả về 0 bản ghi — dừng workflow"] },
+    { "at": "2026-09-19T09:30:00+07:00", "status": "failed", "duration": "0m 22s", "note": "Enrichment AC2 bắt đầu trả về rỗng",
+      "log": ["System A: gửi 11 tin", "System B: AC2 trả về 0 bản ghi lần đầu tiên", "Không có cảnh báo nào được gửi đi"] }
+  ],
+  "report": {
+    "headline": "System B đã dừng từ 19/9 và không ai được báo — mất hai ngày cơ hội upsell trước khi phát hiện.",
+    "body": [
+      "System A chạy đúng thiết kế: lọc store sắp chạm slot limit, gửi qua Crisp, tôn trọng timezone, không gửi trùng. 41 store đã nhận tin trong tuần.",
+      "System B đứng im ba ngày. Bước enrichment AC2 trả về 0 bản ghi nên workflow dừng đúng theo logic, nhưng dừng im lặng — không có cảnh báo nào.",
+      "Đường gửi tin trong biểu đồ tụt từ 27 xuống 6 tin mỗi ngày đúng từ ngày 19/9, khớp chính xác với thời điểm AC2 hỏng."
+    ],
+    "blockers": [
+      "Enrichment AC2 trả về rỗng — chưa rõ do đổi schema hay hết hạn xác thực",
+      "Workflow dừng im lặng, không có cảnh báo khi một nhánh chết",
+      "Báo cáo cuối Q3 sẽ thiếu dữ liệu System B của 3 ngày"
+    ],
+    "next": [
+      "Kiểm tra xác thực và schema của AC2",
+      "Thêm cảnh báo khi một nhánh workflow trả về 0 bản ghi hai lần liên tiếp",
+      "Ghi chú khoảng trống 19–21/9 vào báo cáo Q3"
+    ]
+  }
+}

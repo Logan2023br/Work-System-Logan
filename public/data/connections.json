@@ -1,0 +1,12 @@
+{
+  "connections": [
+    { "id": "drive",    "name": "Google Drive",  "kind": "drive", "status": "connected", "detail": "3 thư mục đang theo dõi",        "usedBy": ["halloween-templates", "weekly-report"] },
+    { "id": "sheets",   "name": "Google Sheets", "kind": "sheet", "status": "connected", "detail": "4 bảng đang đồng bộ",            "usedBy": ["halloween-templates", "pagefly-design", "upsell-q3", "weekly-report"] },
+    { "id": "docs",     "name": "Google Docs",   "kind": "doc",   "status": "connected", "detail": "Doc báo cáo tuần",               "usedBy": ["weekly-report"] },
+    { "id": "crisp",    "name": "Crisp",         "kind": "api",   "status": "connected", "detail": "Hội thoại, coupon, thống kê ATC", "usedBy": ["pagefly-design", "upsell-q3", "weekly-report"] },
+    { "id": "mixpanel", "name": "Mixpanel",      "kind": "api",   "status": "connected", "detail": "Sinh trang, click coupon",       "usedBy": ["pagefly-design", "upsell-q3", "weekly-report"] },
+    { "id": "n8n",      "name": "n8n",           "kind": "api",   "status": "error",     "detail": "System B trả lỗi từ 19/9",       "usedBy": ["upsell-q3"] },
+    { "id": "local",    "name": "Thư mục máy",   "kind": "local", "status": "warning",   "detail": "1 đường dẫn export không tồn tại", "usedBy": ["halloween-templates", "pagefly-design"] },
+    { "id": "shopify",  "name": "Shopify",       "kind": "api",   "status": "idle",      "detail": "Đã nối, chưa task nào dùng",     "usedBy": [] }
+  ]
+}

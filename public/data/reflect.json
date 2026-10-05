@@ -1,0 +1,24 @@
+{
+  "week": 39,
+  "range": "21 – 27 tháng 9, 2026",
+  "summary": "Tuần này hệ thống chạy tốt ở chỗ đo được, và hỏng ở chỗ không ai nhìn. Hai trong bốn mảng đang chờ một quyết định của bạn chứ không chờ thêm công việc.",
+  "good": [
+    { "text": "Tách quyết định design sang plan.ts / audit.ts đã trả kết quả đo được — giờ biết chính xác chip selection chiếm 55% gap", "task": "pagefly-design" },
+    { "text": "System A chạy đúng thiết kế suốt tuần: 41 store nhận tin, không trùng ai, đúng timezone", "task": "upsell-q3" },
+    { "text": "Bộ template multi-collection đóng gói trọn vẹn — 7 trang, 7 file .pagefly, mockup đủ 4 khổ", "task": "halloween-templates" },
+    { "text": "Usage PageFly Design tăng 31% so với tuần trước", "task": "weekly-report" }
+  ],
+  "bad": [
+    { "text": "System B chết ba ngày mà không ai biết — workflow dừng im lặng, không có cảnh báo", "task": "upsell-q3" },
+    { "text": "Ba mockup Halloween nằm chờ duyệt, chặn cả luồng xuất file của bộ 2", "task": "halloween-templates" },
+    { "text": "Fix ATC dưới 1h đạt 86%, trượt mục tiêu 90% hai tuần liên tiếp, chưa ai nhận xử lý", "task": "weekly-report" },
+    { "text": "Beta PageFly Design: 7 trên 18 người được mời không hề tạo trang nào", "task": "pagefly-design" }
+  ],
+  "next": [
+    { "text": "Thêm cảnh báo khi một nhánh workflow trả về 0 bản ghi hai lần liên tiếp", "task": "upsell-q3", "weight": "Chặn lỗi im lặng tái diễn" },
+    { "text": "Duyệt 3 mockup và chốt cấu trúc section cho bộ single-product", "task": "halloween-templates", "weight": "Gỡ tắc duy nhất của template" },
+    { "text": "Thử bản sửa chip selection đầu tiên, đo lại trên cùng 40 trang mẫu", "task": "pagefly-design", "weight": "Nhắm 55% gap chất lượng" },
+    { "text": "Tìm nguyên nhân ATC trượt mục tiêu hai tuần liền", "task": "weekly-report", "weight": "KR duy nhất đang đi sai hướng" }
+  ],
+  "pattern": "Cả ba sự cố tuần này đều là lỗi im lặng: AC2 rỗng, thư mục export mất, mockup chờ duyệt. Không cái nào tự báo. Việc đáng làm nhất tuần tới không phải làm thêm task, mà là bắt mọi task phải lên tiếng khi nó dừng."
+}

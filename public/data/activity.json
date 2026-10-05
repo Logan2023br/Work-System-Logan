@@ -1,0 +1,15 @@
+{
+  "events": [
+    { "at": "2026-09-21T09:31:12+07:00", "task": "upsell-q3",           "level": "error", "text": "System B dừng — enrichment AC2 trả về 0 bản ghi" },
+    { "at": "2026-09-21T09:30:44+07:00", "task": "upsell-q3",           "level": "ok",    "text": "System A gửi 6 tin upsell qua Crisp" },
+    { "at": "2026-09-21T09:00:03+07:00", "task": "weekly-report",       "level": "ok",    "text": "Đồng bộ số ticket và ATC từ Crisp" },
+    { "at": "2026-09-21T08:02:19+07:00", "task": "halloween-templates", "level": "wait",  "text": "3 mockup chờ bạn duyệt trước khi xuất .pagefly" },
+    { "at": "2026-09-21T08:00:51+07:00", "task": "halloween-templates", "level": "ok",    "text": "Dựng xong trang 13 và 14 của bộ đồ Halloween" },
+    { "at": "2026-09-21T06:04:38+07:00", "task": "pagefly-design",      "level": "ok",    "text": "Đo 40 trang mẫu — chip selection chiếm 55% gap" },
+    { "at": "2026-09-20T15:30:58+07:00", "task": "upsell-q3",           "level": "error", "text": "System B dừng lần thứ hai trong ngày" },
+    { "at": "2026-09-20T08:03:02+07:00", "task": "halloween-templates", "level": "ok",    "text": "Xuất 3 file .pagefly kèm mockup 4 kích thước" },
+    { "at": "2026-09-19T16:01:44+07:00", "task": "weekly-report",       "level": "ok",    "text": "Dựng xong doc báo cáo tuần 38, chờ bạn gửi" },
+    { "at": "2026-09-19T09:30:22+07:00", "task": "upsell-q3",           "level": "error", "text": "Enrichment AC2 trả về rỗng lần đầu — không có cảnh báo" },
+    { "at": "2026-09-19T08:00:41+07:00", "task": "halloween-templates", "level": "error", "text": "Không tìm thấy thư mục export .pagefly" }
+  ]
+}

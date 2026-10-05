@@ -1,0 +1,60 @@
+{
+  "id": "halloween-templates",
+  "index": "01",
+  "name": "Template PageFly Halloween",
+  "summary": "3 bộ template 7 trang, mỗi bộ một cấu trúc section khác hẳn nhau",
+  "mode": "review",
+  "state": "needs-you",
+  "stateLabel": "Cần bạn duyệt",
+  "health": 0.62,
+  "progress": { "done": 12, "total": 21, "unit": "trang" },
+  "lastRun": "2026-09-21T08:00:00+07:00",
+  "nextRun": "2026-09-22T08:00:00+07:00",
+  "scheduleLabel": "08:00 mỗi ngày",
+  "cron": "0 8 * * *",
+  "action": { "label": "Duyệt 3 mockup", "kind": "review", "count": 3 },
+  "trend": [0, 1, 2, 2, 3, 1, 0, 2, 3, 2, 1, 2, 3, 2],
+  "trendLabel": "Trang dựng xong mỗi ngày",
+  "metrics": [
+    { "label": "Bộ template", "value": "2 / 3", "note": "Bộ single-product chưa bắt đầu" },
+    { "label": "Mockup chờ duyệt", "value": "3", "note": "Store multi-collection" },
+    { "label": "File .pagefly đã xuất", "value": "7", "note": "Đủ 4 kích thước màn hình" }
+  ],
+  "milestones": [
+    { "title": "Store multi-collection — 7 trang", "state": "done", "note": "Đã xuất .pagefly + mockup 4 khổ", "date": "2026-09-12" },
+    { "title": "Store đồ Halloween — 7 trang", "state": "active", "note": "5/7 trang dựng xong, chờ duyệt HTML mockup", "date": "2026-09-21" },
+    { "title": "Store single-product — 7 trang", "state": "todo", "note": "Cấu trúc section chưa chốt", "date": "2026-09-26" },
+    { "title": "Xuất toàn bộ .pagefly + mockup", "state": "todo", "note": "Sau khi cả 3 bộ được duyệt", "date": "2026-09-30" }
+  ],
+  "sources": [
+    { "name": "Halloween mockups", "kind": "drive", "location": "Drive / PageFly Templates / Halloween 2026", "status": "ok", "syncedAt": "2026-09-21T07:58:00+07:00" },
+    { "name": "Bảng theo dõi 21 trang", "kind": "sheet", "location": "Sheets / Halloween tracker", "status": "ok", "syncedAt": "2026-09-21T07:58:00+07:00" },
+    { "name": "Thư mục export .pagefly", "kind": "local", "location": "~/Documents/PageFly-Design/exports/halloween", "status": "stale", "syncedAt": "2026-09-19T17:20:00+07:00" }
+  ],
+  "runs": [
+    { "at": "2026-09-21T08:00:00+07:00", "status": "partial", "duration": "2m 14s", "note": "Dựng 2 trang, 3 mockup chờ bạn duyệt",
+      "log": ["Đọc tracker: 21 trang, 12 xong", "Dựng trang 13 — hero + collection grid", "Dựng trang 14 — lookbook", "Dừng: 3 mockup cần duyệt trước khi xuất .pagefly"] },
+    { "at": "2026-09-20T08:00:00+07:00", "status": "ok", "duration": "3m 02s", "note": "Dựng 3 trang, xuất 3 file .pagefly",
+      "log": ["Dựng trang 10, 11, 12", "Xuất 3 file .pagefly", "Chụp mockup 4 kích thước × 3 trang"] },
+    { "at": "2026-09-19T08:00:00+07:00", "status": "failed", "duration": "0m 41s", "note": "Không đọc được thư mục export",
+      "log": ["Đọc tracker: OK", "Lỗi: không tìm thấy ~/Documents/PageFly-Design/exports/halloween", "Cần kiểm tra lại đường dẫn thư mục export"] }
+  ],
+  "report": {
+    "headline": "Bộ 2 gần xong, nhưng bộ 3 chưa có cấu trúc section nên sẽ trượt deadline nếu không chốt trong tuần này.",
+    "body": [
+      "Bộ multi-collection đã đóng gói đủ: 7 trang, 7 file .pagefly, mockup 4 kích thước màn hình. Không có header/footer riêng, đúng yêu cầu.",
+      "Bộ đồ Halloween đang ở trang 5/7. Ba mockup HTML đang chờ bạn duyệt — theo quy trình thì phải duyệt xong mới được xuất .pagefly, nên đây là chỗ đang tắc.",
+      "Bộ single-product chưa khởi động. Ràng buộc khó nhất là mỗi bộ phải có cấu trúc section khác hẳn hai bộ kia, mà hai bộ đầu đã dùng hết các layout quen thuộc."
+    ],
+    "blockers": [
+      "3 mockup chờ duyệt — chặn việc xuất .pagefly của bộ 2",
+      "Cấu trúc section bộ 3 chưa chốt, không thể bắt đầu dựng",
+      "Đường dẫn thư mục export sai từ 19/9, đang dùng bản copy tay"
+    ],
+    "next": [
+      "Duyệt 3 mockup bộ 2 để mở lại luồng xuất file",
+      "Chốt 7 layout section cho bộ single-product",
+      "Sửa đường dẫn thư mục export trong cấu hình task"
+    ]
+  }
+}
