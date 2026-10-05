@@ -66,10 +66,10 @@ describe('/mcp xác thực', () => {
     expect((await rpc(t, 'tools/list')).status).toBe(401)
   })
 
-  it('liệt kê đúng 5 tool', async () => {
+  it('liệt kê đúng 6 tool', async () => {
     const u = await makeUser(db)
     const r = await rpc(await tokenFor(u), 'tools/list')
-    expect(r.body.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(['bao_ket_qua', 'nop_bao_cao_tuan', 'sua_task', 'tao_task', 'xem_task'])
+    expect(r.body.result.tools.map((t: { name: string }) => t.name).sort()).toEqual(['bao_ket_qua', 'dieu_phoi', 'nop_bao_cao_tuan', 'sua_task', 'tao_task', 'xem_task'])
   })
 })
 
@@ -144,4 +144,19 @@ describe('tool', () => {
     const res = await call(await tokenFor(u), 'nop_bao_cao_tuan', { summary: 'Tuần ổn' })
     expect(res.content[0].text).toContain('2026-W41')
   })
+  it('dieu_phoi: không việc → bảo dừng; có việc → trả leaseId, bao_ket_qua kèm leaseId đóng vòng', async () => {
+    const u = await makeUser(db)
+    const t = await tokenFor(u)
+    expect((await call(t, 'dieu_phoi', {})).content[0].text).toContain('Không có việc')
+    await call(t, 'tao_task', newTask)
+    await db.update(tasks).set({ nextRunAt: new Date(now.getTime() - 60_000) })
+    const res = await call(t, 'dieu_phoi', {})
+    const json = JSON.parse(res.content[0].text.slice(res.content[0].text.indexOf('{')))
+    expect(json.viec).toHaveLength(1)
+    const leaseId = json.viec[0].leaseId
+    expect((await call(t, 'bao_ket_qua', { slug: 'upsell', status: 'ok', leaseId })).isError).toBeFalsy()
+    const again = await call(t, 'bao_ket_qua', { slug: 'upsell', status: 'ok', leaseId })
+    expect(again.content[0].text).toContain('đã ghi trước đó')
+  })
+
 })

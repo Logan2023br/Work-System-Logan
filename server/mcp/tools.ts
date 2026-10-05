@@ -4,6 +4,7 @@ import { runReportSchema, slugSchema, taskDefinitionSchema, taskPatchSchema, wee
 import { users } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { AppError, unauthorized } from '../core/errors.js'
+import { dispatch } from '../core/dispatch.js'
 import { createTask, getMyTask, listMyTasks, reportRun, submitWeeklyReport, updateTask } from '../core/tasks.js'
 import type { User } from '../core/users.js'
 import { eq } from 'drizzle-orm'
@@ -16,7 +17,8 @@ export interface ToolDeps {
 
 export const MCP_INSTRUCTIONS = [
   'Work System là bàn điều phối công việc của team BraveBits.',
-  'Dùng tao_task để khai báo một việc định kỳ, sua_task để cập nhật, xem_task để xem, bao_ket_qua sau MỖI lần chạy (kể cả khi lỗi), nop_bao_cao_tuan cho báo cáo tuần.',
+  'Vòng Điều phối (tác vụ hẹn giờ 15 phút): gọi dieu_phoi; nếu không có việc thì kết thúc ngay. Với mỗi việc: làm theo instructions của task (và instructions/note của lệnh nếu là lệnh), dùng skill được ghi nếu có, rồi LUÔN gọi bao_ket_qua kèm đúng leaseId — kể cả khi lỗi. Lỗi một việc không được làm dừng các việc khác. Không hỏi lại người dùng trong vòng Điều phối.',
+  'Ngoài vòng Điều phối: tao_task để khai báo việc định kỳ, sua_task để cập nhật, xem_task để xem, bao_ket_qua (không leaseId) khi người dùng nhờ chạy tay, nop_bao_cao_tuan cho báo cáo tuần.',
   'Đồng nghiệp xem được mọi thứ ghi vào đây: KHÔNG BAO GIỜ ghi mật khẩu, API key, token hay dữ liệu cá nhân của khách hàng.',
   'slug: chữ thường không dấu, số và dấu gạch ngang. cron: 5 trường, theo giờ Việt Nam.',
 ].join(' ')
@@ -48,6 +50,24 @@ export function registerTools(server: McpServer, deps: ToolDeps) {
       }
     }
   }
+
+  const empty = z.object({})
+  server.registerTool(
+    'dieu_phoi',
+    {
+      title: 'Điều phối',
+      description: 'Nhận việc cần làm ngay: lệnh từ web và task đến hạn của bạn. Gọi đầu tiên trong mỗi vòng Điều phối. Mỗi việc có leaseId — gửi lại leaseId đó trong bao_ket_qua.',
+      inputSchema: empty,
+    },
+    guarded(async (_args: z.output<typeof empty>, me) => {
+      const viec = await dispatch(deps.db, me, deps.now())
+      if (viec.length === 0) return ok('Không có việc nào đến hạn. Kết thúc vòng Điều phối.', { viec })
+      return ok(
+        `Có ${viec.length} việc. Làm lần lượt, lệnh trước. Sau mỗi việc gọi bao_ket_qua với slug và leaseId tương ứng.`,
+        { viec },
+      )
+    }),
+  )
 
   server.registerTool(
     'tao_task',
@@ -94,11 +114,12 @@ export function registerTools(server: McpServer, deps: ToolDeps) {
     'bao_ket_qua',
     {
       title: 'Báo kết quả chạy',
-      description: 'Ghi kết quả MỘT lần chạy task (kể cả khi lỗi): status ok/partial/failed, ghi chú, log từng bước, và tùy chọn cập nhật trạng thái, chỉ số, tiến độ, xu hướng (trendThem), mốc, khối, báo cáo.',
+      description: 'Ghi kết quả MỘT lần chạy task (kể cả khi lỗi): status ok/partial/failed, ghi chú, log từng bước, và tùy chọn cập nhật trạng thái, chỉ số, tiến độ, xu hướng (trendThem), mốc, khối, báo cáo. Trong vòng Điều phối, BẮT BUỘC gửi leaseId nhận từ dieu_phoi.',
       inputSchema: runReportSchema,
     },
     guarded(async (args: z.output<typeof runReportSchema>, me) => {
-      const { task } = await reportRun(deps.db, me, args, deps.now())
+      const { task, duplicate } = await reportRun(deps.db, me, args, deps.now())
+      if (duplicate) return ok(`Kết quả cho lease này đã ghi trước đó — không ghi lại.`, { slug: task.slug })
       return ok(`Đã ghi kết quả cho "${task.name}". Trạng thái: ${task.stateLabel}.`, { slug: task.slug, state: task.state, nextRunAt: task.nextRunAt?.toISOString() ?? null })
     }),
   )
