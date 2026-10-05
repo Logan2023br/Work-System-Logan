@@ -21,3 +21,4 @@ export const previewCron = (cron: string) => api<SchedulePreview>(`/api/schedule
 export const saveWorkHours = (v: WorkHours) => api<Me>('/api/me/work-hours', json('PUT', v))
 export const loadReportWeeks = (id: string) => api<ReportWeek[]>(`/api/workspace/${encodeURIComponent(id)}/reports`)
 export const loadReport = (id: string, week: string) => api<Reflect>(`/api/workspace/${encodeURIComponent(id)}/reports/${encodeURIComponent(week)}`)
+export const deactivateUserApi = (id: string) => api<{ ok: true }>(`/api/admin/users/${encodeURIComponent(id)}/deactivate`, { method: 'POST' })

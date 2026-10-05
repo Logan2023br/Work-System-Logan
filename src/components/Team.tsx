@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Person, TaskState } from '../lib/types'
 import { ago, tone } from '../lib/format'
 import { Lamp } from './Bits'
@@ -31,7 +32,22 @@ function Ring({ value }: { value: number | null }) {
   )
 }
 
-export default function Team({ people, meId, now, onVisit }: { people: Person[]; meId: string; now: Date; onVisit: (id: string) => void }) {
+export default function Team({
+  people,
+  meId,
+  now,
+  onVisit,
+  isAdmin,
+  onDeactivate,
+}: {
+  people: Person[]
+  meId: string
+  now: Date
+  onVisit: (id: string) => void
+  isAdmin: boolean
+  onDeactivate: (id: string) => Promise<void>
+}) {
+  const [armed, setArmed] = useState<string | null>(null)
   const active = people.filter((p) => p.active)
   const online = active.filter((p) => p.presence === 'online').length
   const attention = active.filter((p) => p.attention).length
@@ -49,8 +65,16 @@ export default function Team({ people, meId, now, onVisit }: { people: Person[];
 
       <div className="team">
         {people.map((p, i) => (
-          <button
+          <div
             key={p.id}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault()
+                onVisit(p.id)
+              }
+            }}
             className={`mate rise${p.active ? '' : ' mate--gone'}`}
             style={{ animationDelay: `${0.04 * i}s` }}
             onClick={() => onVisit(p.id)}
@@ -88,7 +112,20 @@ export default function Team({ people, meId, now, onVisit }: { people: Person[];
                 <span className="mate__calm">Không có gì cần chú ý</span>
               )}
             </div>
-          </button>
+            {isAdmin && p.active && p.id !== meId && (
+              <button
+                className={`mate__admin${armed === p.id ? ' is-armed' : ''}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  if (armed === p.id) onDeactivate(p.id).finally(() => setArmed(null))
+                  else setArmed(p.id)
+                }}
+                onBlur={() => setArmed((a) => (a === p.id ? null : a))}
+              >
+                {armed === p.id ? 'Bấm lần nữa: khóa tài khoản và ngắt mọi Claude' : 'Vô hiệu hóa'}
+              </button>
+            )}
+          </div>
         ))}
       </div>
     </div>

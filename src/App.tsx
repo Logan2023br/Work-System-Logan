@@ -3,7 +3,7 @@ import type { ReactElement } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import type { Me, MyConnections, Person, Task, Workspace } from './lib/types'
 import { ApiError } from './lib/api'
-import { cancelCommandApi, loadMe, loadMyConnections, loadPeople, loadWorkspace, logout, revokeLink, sendCommand } from './lib/data'
+import { cancelCommandApi, deactivateUserApi, loadMe, loadMyConnections, loadPeople, loadWorkspace, logout, revokeLink, sendCommand } from './lib/data'
 import { PresenceBar } from './components/Presence'
 import { usePoll } from './lib/usePoll'
 import { clock } from './lib/format'
@@ -126,6 +126,15 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
     }
   }
   const fire = (t: Task) => send(t, t.action.actionId)
+  async function deactivate(id: string) {
+    try {
+      await deactivateUserApi(id)
+      setToast('Đã vô hiệu hóa — phiên đăng nhập và mọi kết nối Claude của người này đã bị ngắt')
+      refresh()
+    } catch (e) {
+      setToast((e as Error).message)
+    }
+  }
   async function cancel(id: string) {
     try {
       await cancelCommandApi(id)
@@ -205,7 +214,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
         )}
 
         {view === 'team' ? (
-          <Team people={people} meId={me.id} now={now} onVisit={visit} />
+          <Team people={people} meId={me.id} now={now} onVisit={visit} isAdmin={me.role === 'admin'} onDeactivate={deactivate} />
         ) : !ws ? (
           <div className="loading">đang đọc dữ liệu…</div>
         ) : (

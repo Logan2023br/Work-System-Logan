@@ -1,0 +1,17 @@
+/* ============================================================
+   Hoàn thiện: admin, hướng dẫn, ⌘K, skeleton.
+   ============================================================ */
+
+.mate { cursor: pointer; }
+.mate:focus-visible { outline: 2px solid var(--needs); outline-offset: 3px; }
+.mate__admin {
+  align-self: flex-start;
+  margin-top: -4px;
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--line);
+  color: var(--fg-3);
+  font-size: 12px;
+}
+.mate__admin:hover { color: var(--bad); border-color: rgba(255, 92, 77, .45); }
+.mate__admin.is-armed { color: var(--bad); border-color: var(--bad); background: var(--bad-dim); }
