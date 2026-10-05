@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { LIMITS, blockSchema, blocksSchema, actionsSchema, taskDefinitionSchema, taskPatchSchema, byteSize } from './schema.js'
+import { LIMITS, blockSchema, blocksSchema, actionsSchema, taskDefinitionSchema, taskPatchSchema, weeklyReportSchema, byteSize } from './schema.js'
 
 const baseTask = {
   slug: 'upsell-q3',
@@ -88,5 +88,12 @@ describe('actionsSchema', () => {
 describe('byteSize', () => {
   it('đếm byte UTF-8', () => {
     expect(byteSize('ạ')).toBe(5) // "\"ạ\"" = 2 + 3 byte
+  })
+})
+
+describe('weeklyReportSchema', () => {
+  it('nhận weight là một cụm ngắn như dữ liệu thật', () => {
+    const r = weeklyReportSchema.safeParse({ week: '2026-W39', summary: 's', next: [{ text: 't', task: 'x', weight: 'KR duy nhất đang đi sai hướng' }] })
+    expect(r.success).toBe(true)
   })
 })

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "rewrites": [
+    { "source": "/api/router", "destination": "/api/router" },
+    { "source": "/api/:path*", "destination": "/api/router?__p=/api/:path*" },
+    { "source": "/auth/:path*", "destination": "/api/router?__p=/auth/:path*" },
+    { "source": "/oauth/:path*", "destination": "/api/router?__p=/oauth/:path*" },
+    { "source": "/mcp", "destination": "/api/router?__p=/mcp" },
+    { "source": "/.well-known/:path*", "destination": "/api/router?__p=/.well-known/:path*" },
+    { "source": "/((?!assets/|favicon\\.svg|icons\\.svg).*)", "destination": "/index.html" }
+  ]
+}

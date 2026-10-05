@@ -161,7 +161,7 @@ export const taskPatchSchema = z.object(
 )
 type TaskPatchShape = Omit<typeof taskDefinitionBase.shape, 'slug'>
 
-export const reflectNoteSchema = z.object({ text: label(500), task: text(60).default(''), weight: text(20).optional() })
+export const reflectNoteSchema = z.object({ text: label(500), task: text(60).default(''), weight: text(80).optional() })
 export const weeklyReportSchema = z.object({
   week: z.string().regex(/^\d{4}-W\d{2}$/, 'Tuần dạng 2026-W41'),
   summary: text(1500),

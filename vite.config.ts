@@ -1,7 +1,32 @@
 import react from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { getRequestListener } from '@hono/node-server'
+import { defineConfig, loadEnv, type Plugin } from 'vite'
 
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [react()],
+const BACKEND = /^\/(api|auth|mcp|oauth|\.well-known)(\/|\?|$)/
+
+/** Gắn backend Hono vào Vite dev server — một lệnh `npm run dev` chạy cả hai. */
+function devBackend(): Plugin {
+  return {
+    name: 'work-system-backend',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use(async (req, res, next) => {
+        if (!req.url || !BACKEND.test(req.url)) return next()
+        try {
+          const mod = (await server.ssrLoadModule('/server/dev.ts')) as {
+            getDevApp: () => Promise<{ fetch: (r: Request) => Response | Promise<Response> }>
+          }
+          const app = await mod.getDevApp()
+          await getRequestListener(app.fetch)(req, res)
+        } catch (e) {
+          next(e)
+        }
+      })
+    },
+  }
+}
+
+export default defineConfig(({ mode }) => {
+  Object.assign(process.env, loadEnv(mode, process.cwd(), ''))
+  return { plugins: [react(), devBackend()] }
 })
