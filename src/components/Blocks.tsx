@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { Block } from '../lib/types'
 import { parseMiniMarkdown, type MdInline } from '../lib/miniMarkdown'
 
@@ -85,7 +85,16 @@ type ChartData = Extract<Block, { type: 'chart' }>['data']
 function Chart({ data }: { data: ChartData }) {
   const [hover, setHover] = useState<number | null>(null)
   const [asTable, setAsTable] = useState(false)
-  const W = 640
+  const plot = useRef<HTMLDivElement>(null)
+  // Vẽ 1:1 theo chiều rộng thật để chữ trục không bị phóng to/thu nhỏ theo khung.
+  const [W, setW] = useState(640)
+  useEffect(() => {
+    const el = plot.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setW(Math.max(280, Math.round(e.contentRect.width))))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [asTable])
   const H = 220
   const P = { l: 44, r: 64, t: 14, b: 28 }
   const n = data.labels.length
@@ -132,8 +141,8 @@ function Chart({ data }: { data: ChartData }) {
           ))}
         </ul>
       )}
-      <div className="blk__plot">
-        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`Biểu đồ ${data.kind === 'line' ? 'đường' : 'cột'}: ${data.series.map((s) => s.name).join(', ')}`} onMouseLeave={() => setHover(null)}>
+      <div className="blk__plot" ref={plot}>
+        <svg viewBox={`0 0 ${W} ${H}`} width={W} height={H} role="img" aria-label={`Biểu đồ ${data.kind === 'line' ? 'đường' : 'cột'}: ${data.series.map((s) => s.name).join(', ')}`} onMouseLeave={() => setHover(null)}>
           {ticks.map((t, i) => (
             <g key={i}>
               <line x1={P.l} x2={W - P.r} y1={y(t)} y2={y(t)} className="blk__grid" />

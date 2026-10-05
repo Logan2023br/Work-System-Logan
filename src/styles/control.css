@@ -129,7 +129,7 @@
 /* ---------- khối tùy chọn ---------- */
 :root { --s1: #3987e5; --s2: #008300; --s3: #d55181; }
 
-.blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; margin-top: 22px; }
+.blocks { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(320px, 100%), 1fr)); gap: 16px; margin-top: 22px; }
 .blk { padding: 16px 18px; border-radius: 14px; background: var(--ink-raised); border: 1px solid var(--line-soft); min-width: 0; }
 .blk--chart, .blk--table { grid-column: 1 / -1; }
 .blk__title { margin: 0 0 12px; font-family: var(--display); font-size: 16px; font-weight: 650; }
