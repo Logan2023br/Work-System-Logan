@@ -17,12 +17,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@modelcontextprotocol/server": "^2.3.0",
     "@neondatabase/serverless": "^1.2.0",
     "arctic": "^3.7.0",
     "cron-parser": "^5.10.1",
     "drizzle-orm": "^0.45.3",
     "framer-motion": "^13.4.0",
     "hono": "^4.13.13",
+    "mcp-handler": "^2.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "zod": "^4.6.5"

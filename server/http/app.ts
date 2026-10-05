@@ -10,6 +10,7 @@ import { apiRoutes } from './api.js'
 import { authRoutes } from './auth.js'
 import type { MetadataFetcher } from '../core/oauth-clients.js'
 import { oauthRoutes } from './oauth.js'
+import { mcpHandler } from './mcp.js'
 import type { GoogleAuth } from './google.js'
 
 export interface AppDeps {
@@ -69,6 +70,8 @@ export function createApp(deps: AppDeps) {
   })
   app.notFound((c) => c.json({ error: 'not_found', message: 'Không có đường dẫn này' }, 404))
   app.route('/', oauthRoutes(deps))
+  const mcp = mcpHandler(deps)
+  app.all('/mcp', (c) => mcp(c.req.raw))
   app.route('/auth', authRoutes(deps))
   app.route('/api', apiRoutes(deps))
   return app
