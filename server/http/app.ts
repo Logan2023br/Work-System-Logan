@@ -8,6 +8,8 @@ import type { User } from '../core/users.js'
 import type { Db } from '../db/types.js'
 import { apiRoutes } from './api.js'
 import { authRoutes } from './auth.js'
+import type { MetadataFetcher } from '../core/oauth-clients.js'
+import { oauthRoutes } from './oauth.js'
 import type { GoogleAuth } from './google.js'
 
 export interface AppDeps {
@@ -15,6 +17,7 @@ export interface AppDeps {
   config: Config
   google: GoogleAuth
   now: () => Date
+  fetchClientMetadata: MetadataFetcher
 }
 
 export type AppEnv = { Variables: { user: User } }
@@ -65,6 +68,7 @@ export function createApp(deps: AppDeps) {
     return c.json({ error: 'internal', message: 'Máy chủ gặp lỗi, thử lại sau ít phút' }, 500)
   })
   app.notFound((c) => c.json({ error: 'not_found', message: 'Không có đường dẫn này' }, 404))
+  app.route('/', oauthRoutes(deps))
   app.route('/auth', authRoutes(deps))
   app.route('/api', apiRoutes(deps))
   return app

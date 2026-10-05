@@ -5,6 +5,7 @@ import { openPglite } from './db/pglite.js'
 import type { Db } from './db/types.js'
 import { createApp, type AppEnv } from './http/app.js'
 import { createGoogleAuth } from './http/google.js'
+import { fetchClientMetadata } from './core/oauth-clients.js'
 
 const g = globalThis as typeof globalThis & { __wsDevDb?: Promise<Db> }
 
@@ -17,5 +18,5 @@ function devDb(): Promise<Db> {
 
 export async function getDevApp(): Promise<Hono<AppEnv>> {
   const config = loadConfig()
-  return createApp({ db: await devDb(), config, google: createGoogleAuth(config), now: () => new Date() })
+  return createApp({ db: await devDb(), config, google: createGoogleAuth(config), now: () => new Date(), fetchClientMetadata })
 }

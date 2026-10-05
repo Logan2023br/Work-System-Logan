@@ -2,11 +2,12 @@ import { loadConfig } from '../server/config.js'
 import { createNeonDb } from '../server/db/neon.js'
 import { createApp } from '../server/http/app.js'
 import { createGoogleAuth } from '../server/http/google.js'
+import { fetchClientMetadata } from '../server/core/oauth-clients.js'
 
 const config = loadConfig()
 const url = process.env.DATABASE_URL
 if (!url) throw new Error('Thiếu biến môi trường DATABASE_URL')
-const app = createApp({ db: createNeonDb(url), config, google: createGoogleAuth(config), now: () => new Date() })
+const app = createApp({ db: createNeonDb(url), config, google: createGoogleAuth(config), now: () => new Date(), fetchClientMetadata })
 
 /** vercel.json rewrite mọi đường dẫn backend về đây kèm `__p` = đường dẫn gốc. */
 async function handle(req: Request): Promise<Response> {

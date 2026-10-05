@@ -22,7 +22,7 @@ let app: ReturnType<typeof createApp>
 beforeAll(async () => { db = await testDb() })
 beforeEach(async () => {
   await resetDb(db)
-  app = createApp({ db, config, google, now: () => now })
+  app = createApp({ db, config, google, now: () => now, fetchClientMetadata: async () => null })
   nextProfile = { email: 'an@bravebits.vn', emailVerified: true, hd: 'bravebits.vn', name: 'An', picture: null }
 })
 
@@ -79,7 +79,7 @@ describe('/auth/google', () => {
   })
 
   it('chưa cấu hình GOOGLE_CLIENT_ID → về /login?error=setup, không gửi sang Google', async () => {
-    const bare = createApp({ db, config: { ...config, googleClientId: '' }, google, now: () => now })
+    const bare = createApp({ db, config: { ...config, googleClientId: '' }, google, now: () => now, fetchClientMetadata: async () => null })
     const res = await bare.request('/auth/google')
     expect(res.status).toBe(302)
     expect(res.headers.get('location')).toBe('/login?error=setup')
