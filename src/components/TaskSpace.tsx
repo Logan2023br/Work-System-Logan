@@ -4,6 +4,7 @@ import type { Task, Run } from '../lib/types'
 import { tone, ago, dayAndClock, shortDate } from '../lib/format'
 import { Lamp, Key } from './Bits'
 import { ActionBar, CommandTickets } from './Commands'
+import Blocks from './Blocks'
 import { IconBack, IconChev, SourceIcon } from './Icons'
 
 const TABS = ['Báo cáo', 'Tiến độ', 'Lệnh', 'Nguồn dữ liệu', 'Lần chạy'] as const
@@ -111,6 +112,7 @@ export default function TaskSpace({
 
       <div key={tab} className="rise">
           {tab === 'Báo cáo' && (
+            <>
             <div className="cols">
               {!task.report.headline && task.report.body.length === 0 ? (
                 <article className="paper">
@@ -157,6 +159,8 @@ export default function TaskSpace({
                 ))}
               </div>
             </div>
+              <Blocks blocks={task.blocks} />
+            </>
           )}
 
           {tab === 'Tiến độ' && (
