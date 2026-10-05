@@ -1,32 +1,38 @@
-# React + TypeScript + Vite
+# Work System
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Bàn điều phối của team: mỗi người nối Claude desktop của mình, Claude chạy việc theo lịch và báo tiến độ, chỉ số, báo cáo tuần lên đây. Mọi người xem được bàn của nhau (chỉ đọc).
 
-Currently, two official plugins are available:
+Thiết kế: `docs/superpowers/specs/2026-10-05-work-system-multi-user-design.md`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Chạy trên máy
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+cp .env.example .env      # DEV_LOGIN=1 cho phép đăng nhập không cần Google trên localhost
+npm run seed -- --demo    # dừng `npm run dev` trước khi seed (PGlite chỉ mở được một lần)
+npm run dev               # http://localhost:5173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Đăng nhập nhanh khi dev: `http://localhost:5173/auth/dev?email=tutnv@bravebits.vn&name=Logan`
+
+Test: `npm test` · Kiểm tra kiểu: `npm run typecheck`
+
+## Triển khai (Vercel)
+
+1. **Google OAuth:** Google Cloud Console → APIs & Services → Credentials → *Create OAuth client ID* (Web application).
+   Authorized redirect URI: `https://<domain>/auth/google/callback` (thêm `http://localhost:5173/auth/google/callback` nếu muốn test Google thật ở local).
+   OAuth consent screen: *Internal* (chỉ người trong Workspace bravebits.vn).
+2. **Vercel project:** import repo; Framework = Vite.
+3. **Database:** tab *Storage* → *Create Database* → Neon Postgres (Free) → *Connect* vào project. Vercel tự thêm `DATABASE_URL`.
+4. **Biến môi trường (Production + Preview):**
+   `PUBLIC_URL=https://<domain>` · `ALLOWED_DOMAIN=bravebits.vn` · `ADMIN_EMAILS=tutnv@bravebits.vn` · `GOOGLE_CLIENT_ID` · `GOOGLE_CLIENT_SECRET`. **Không** đặt `DEV_LOGIN`.
+5. **Deploy:** push lên nhánh chính. Lệnh `vercel-build` tự chạy migration rồi build.
+6. **Nạp dữ liệu mẫu (một lần):** `DATABASE_URL=<chuỗi Neon> npm run seed`.
+
+## Cấu trúc
+
+- `shared/` — schema zod và kiểu DTO dùng chung cho web và server
+- `server/core/` — toàn bộ logic và phân quyền
+- `server/http/` — app Hono: `/auth/*`, `/api/*`
+- `api/router.ts` — Vercel Function duy nhất; `vercel.json` rewrite mọi đường backend về đây
+- `src/` — web React
