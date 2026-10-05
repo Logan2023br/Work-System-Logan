@@ -235,3 +235,7 @@
 }
 .hours__err { color: var(--bad); font-size: 13px; margin: 10px 0 0; }
 .hours__hint { color: var(--fg-3); font: 12px var(--mono); margin: 12px 0 0; }
+
+.weeks { display: flex; flex-wrap: wrap; gap: 6px; margin: -8px 0 22px; }
+.weeks__chip { height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line); color: var(--fg-3); font: 500 12.5px var(--mono); }
+.weeks__chip[aria-selected='true'] { border-color: var(--needs); color: var(--needs); background: var(--needs-dim); }

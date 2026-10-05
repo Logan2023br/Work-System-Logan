@@ -45,3 +45,16 @@ export function vnClock(d: Date): { dow: number; minutes: number } {
   const v = new Date(d.getTime() + OFFSET)
   return { dow: v.getUTCDay(), minutes: v.getUTCHours() * 60 + v.getUTCMinutes() }
 }
+
+/** Tuần ISO từ khóa "2026-W40" (tính theo giờ VN); khóa sai → null. */
+export function weekFromKey(key: string): WeekDTO | null {
+  const m = /^(\d{4})-W(\d{2})$/.exec(key)
+  if (!m) return null
+  const [y, w] = [Number(m[1]), Number(m[2])]
+  if (w < 1 || w > 53) return null
+  const jan4 = Date.UTC(y, 0, 4)
+  const week1Mon = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * DAY
+  const thursday = new Date(week1Mon + ((w - 1) * 7 + 3) * DAY + 5 * 3_600_000)
+  const out = vnWeek(thursday)
+  return out.key === key ? out : null
+}

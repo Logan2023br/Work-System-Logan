@@ -109,3 +109,22 @@ describe('getWorkspace', () => {
     expect(ws.tasks[0].runs[0].log).toEqual([])
   })
 })
+import { getReport, listReportWeeks } from './workspace.js'
+
+describe('báo cáo theo tuần', () => {
+  it('liệt kê tuần mới nhất trước; đọc từng tuần; tuần không có/khóa sai → not_found', async () => {
+    const u = await makeUser(db)
+    await db.insert(weeklyReports).values([
+      { ownerId: u.id, week: '2026-W39', summary: 'cũ' },
+      { ownerId: u.id, week: '2026-W40', summary: 'mới' },
+    ])
+    expect(await listReportWeeks(db, u.id)).toEqual([
+      { weekKey: '2026-W40', week: 40, range: '28/9 – 4/10, 2026' },
+      { weekKey: '2026-W39', week: 39, range: '21 – 27 tháng 9, 2026' },
+    ])
+    expect((await getReport(db, u.id, '2026-W39')).summary).toBe('cũ')
+    await expect(getReport(db, u.id, '2026-W41')).rejects.toMatchObject({ code: 'not_found' })
+    await expect(getReport(db, u.id, 'rac')).rejects.toMatchObject({ code: 'not_found' })
+    await expect(listReportWeeks(db, 'rac')).rejects.toMatchObject({ code: 'not_found' })
+  })
+})

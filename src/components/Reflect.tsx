@@ -1,6 +1,31 @@
-import type { Reflect as ReflectData, Task } from '../lib/types'
+import { useEffect, useState } from 'react'
+import type { Reflect as ReflectData, ReportWeek, Task } from '../lib/types'
+import { loadReport, loadReportWeeks } from '../lib/data'
 
-export default function Reflect({ reflect, tasks }: { reflect: ReflectData | null; tasks: Task[] }) {
+export default function Reflect({ reflect: latest, tasks, ownerId }: { reflect: ReflectData | null; tasks: Task[]; ownerId: string }) {
+  const [weeks, setWeeks] = useState<ReportWeek[]>([])
+  const [picked, setPicked] = useState<ReflectData | null>(null)
+  useEffect(() => {
+    setPicked(null)
+    loadReportWeeks(ownerId).then(setWeeks).catch(() => setWeeks([]))
+  }, [ownerId])
+  const reflect = picked ?? latest
+  async function pick(key: string) {
+    try {
+      setPicked(await loadReport(ownerId, key))
+    } catch {
+      setPicked(null)
+    }
+  }
+  const chips = weeks.length > 1 && (
+    <div className="weeks" role="tablist" aria-label="Chọn tuần">
+      {weeks.map((w) => (
+        <button key={w.weekKey} role="tab" className="weeks__chip" aria-selected={reflect?.weekKey === w.weekKey} onClick={() => pick(w.weekKey)} title={w.range}>
+          Tuần {w.week}
+        </button>
+      ))}
+    </div>
+  )
   if (!reflect) {
     return (
       <div className="wrap">
@@ -25,6 +50,8 @@ export default function Reflect({ reflect, tasks }: { reflect: ReflectData | nul
         <h1 className="sec">Nhìn lại tuần {reflect.week}</h1>
         <p className="sec__note">{reflect.range} · tổng hợp từ {tasks.length} task</p>
       </header>
+
+      {chips}
 
       <article className="paper rise">
         <p className="paper__lede">{reflect.summary}</p>

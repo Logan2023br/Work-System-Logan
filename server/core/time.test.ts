@@ -31,3 +31,14 @@ describe('vnDate', () => {
     expect(vnDate(new Date('2026-10-04T18:00:00Z'))).toBe('2026-10-05')
   })
 })
+import { weekFromKey } from './time.js'
+
+describe('weekFromKey', () => {
+  it('2026-W40 → 28/9 – 4/10', () => {
+    expect(weekFromKey('2026-W40')).toMatchObject({ key: '2026-W40', number: 40, range: '28/9 – 4/10, 2026' })
+  })
+  it('khóa sai → null', () => {
+    expect(weekFromKey('2026-40')).toBeNull()
+    expect(weekFromKey('2026-W60')).toBeNull()
+  })
+})

@@ -5,7 +5,7 @@ import { commandInputSchema, pauseInputSchema, scheduleInputSchema, workHoursSch
 import { cancelCommand, createCommand, previewSchedule, setPaused, setSchedule, setWorkHours } from '../core/control.js'
 import { invalid } from '../core/errors.js'
 import { deactivateUser, toMeDTO } from '../core/users.js'
-import { getWorkspace, listPeople } from '../core/workspace.js'
+import { getReport, getWorkspace, listPeople, listReportWeeks } from '../core/workspace.js'
 import { listConnections, revokeConnection } from '../core/oauth-tokens.js'
 import { mcpResource } from './oauth.js'
 import { requireUser, sameOrigin, type AppDeps, type AppEnv } from './app.js'
@@ -70,6 +70,10 @@ export function apiRoutes(deps: AppDeps) {
   r.get('/schedule/preview', (c) => c.json(previewSchedule(c.req.query('cron') ?? '', deps.now())))
 
   r.put('/me/work-hours', async (c) => c.json(toMeDTO(await setWorkHours(deps.db, c.get('user'), await bodyOf(c, workHoursSchema)))))
+
+  const ownerOf = (c: Context<AppEnv>) => (c.req.param('id') === 'me' ? c.get('user').id : c.req.param('id')!)
+  r.get('/workspace/:id/reports', async (c) => c.json(await listReportWeeks(deps.db, ownerOf(c))))
+  r.get('/workspace/:id/reports/:week', async (c) => c.json(await getReport(deps.db, ownerOf(c), c.req.param('week'))))
 
   return r
 }

@@ -147,3 +147,9 @@ export interface SchedulePreviewDTO {
   label: string | null
   next: string[]
 }
+
+export interface ReportWeekDTO {
+  weekKey: string
+  week: number
+  range: string
+}

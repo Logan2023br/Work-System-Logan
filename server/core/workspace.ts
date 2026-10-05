@@ -1,11 +1,11 @@
-import { asc, desc, eq } from 'drizzle-orm'
-import type { PersonDTO, ReflectDTO, WorkspaceDTO } from '../../shared/dto.js'
+import { and, asc, desc, eq } from 'drizzle-orm'
+import type { PersonDTO, ReflectDTO, ReportWeekDTO, WorkspaceDTO } from '../../shared/dto.js'
 import { TASK_STATES, type TaskState } from '../../shared/schema.js'
 import { activity, commands, runs, tasks, users, weeklyReports } from '../db/schema.js'
 import type { Db } from '../db/types.js'
 import { deriveConnections, toTaskDTO, type TaskRow } from './dto.js'
 import { notFound } from './errors.js'
-import { vnWeek } from './time.js'
+import { vnWeek, weekFromKey } from './time.js'
 import { nextDispatchAt, presenceOf } from './presence.js'
 import { isUuid } from './tokens.js'
 import type { User } from './users.js'
@@ -79,15 +79,11 @@ export async function getWorkspace(db: Db, viewer: User, ownerId: string, now: D
 }
 
 function toReflectDTO(r: typeof weeklyReports.$inferSelect): ReflectDTO {
-  const [y, w] = r.week.split('-W').map(Number)
-  // Thứ 5 của tuần ISO luôn nằm trong năm ISO → lấy mốc đó để vnWeek tính range.
-  const jan4 = Date.UTC(y, 0, 4)
-  const week1Mon = jan4 - ((new Date(jan4).getUTCDay() + 6) % 7) * 86_400_000
-  const thursday = new Date(week1Mon + ((w - 1) * 7 + 3) * 86_400_000 + 5 * 3_600_000)
+  const w = weekFromKey(r.week)
   return {
-    week: w,
+    week: w?.number ?? 0,
     weekKey: r.week,
-    range: vnWeek(thursday).range,
+    range: w?.range ?? r.week,
     summary: r.summary,
     good: r.good,
     bad: r.bad,
@@ -95,4 +91,20 @@ function toReflectDTO(r: typeof weeklyReports.$inferSelect): ReflectDTO {
     pattern: r.pattern,
     submittedAt: r.submittedAt.toISOString(),
   }
+}
+
+export async function listReportWeeks(db: Db, ownerId: string): Promise<ReportWeekDTO[]> {
+  if (!isUuid(ownerId)) throw notFound('Không tìm thấy người này')
+  const rows = await db.select({ week: weeklyReports.week }).from(weeklyReports).where(eq(weeklyReports.ownerId, ownerId)).orderBy(desc(weeklyReports.week)).limit(26)
+  return rows.flatMap((r) => {
+    const w = weekFromKey(r.week)
+    return w ? [{ weekKey: r.week, week: w.number, range: w.range }] : []
+  })
+}
+
+export async function getReport(db: Db, ownerId: string, weekKey: string): Promise<ReflectDTO> {
+  if (!isUuid(ownerId) || !weekFromKey(weekKey)) throw notFound('Không có báo cáo tuần này')
+  const r = await db.query.weeklyReports.findFirst({ where: and(eq(weeklyReports.ownerId, ownerId), eq(weeklyReports.week, weekKey)) })
+  if (!r) throw notFound('Không có báo cáo tuần này')
+  return toReflectDTO(r)
 }

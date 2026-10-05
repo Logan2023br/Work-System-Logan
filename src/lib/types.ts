@@ -3,6 +3,7 @@ export type {
   ClaudeLinkDTO as ClaudeLink,
   MyConnectionsDTO as MyConnections,
   CommandDTO as Command,
+  ReportWeekDTO as ReportWeek,
   SchedulePreviewDTO as SchedulePreview,
   ConnectionDTO as Connection,
   MeDTO as Me,

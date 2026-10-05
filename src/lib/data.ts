@@ -1,5 +1,5 @@
 import { api } from './api'
-import type { Command, Me, MyConnections, Person, SchedulePreview, WorkHours, Workspace } from './types'
+import type { Command, Me, MyConnections, Person, Reflect, ReportWeek, SchedulePreview, WorkHours, Workspace } from './types'
 
 export const loadMe = () => api<Me>('/api/me')
 export const loadPeople = () => api<Person[]>('/api/people')
@@ -19,3 +19,5 @@ export const savePaused = (slug: string, paused: boolean) =>
   api<{ paused: boolean; nextRun: string | null }>(`/api/tasks/${encodeURIComponent(slug)}/pause`, json('PUT', { paused }))
 export const previewCron = (cron: string) => api<SchedulePreview>(`/api/schedule/preview?cron=${encodeURIComponent(cron)}`)
 export const saveWorkHours = (v: WorkHours) => api<Me>('/api/me/work-hours', json('PUT', v))
+export const loadReportWeeks = (id: string) => api<ReportWeek[]>(`/api/workspace/${encodeURIComponent(id)}/reports`)
+export const loadReport = (id: string, week: string) => api<Reflect>(`/api/workspace/${encodeURIComponent(id)}/reports/${encodeURIComponent(week)}`)

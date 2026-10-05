@@ -219,7 +219,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
             ) : view === 'connections' ? (
               <Connections connections={ws.connections} tasks={ws.tasks} claude={ws.isMine ? claude : null} onRevoke={revoke} me={ws.isMine ? me : null} onMeSaved={(m) => { onMe(m); refresh() }} onToast={setToast} />
             ) : (
-              <Reflect reflect={ws.reflect} tasks={ws.tasks} />
+              <Reflect reflect={ws.reflect} tasks={ws.tasks} ownerId={ws.owner.id} />
             )}
           </div>
         )}
