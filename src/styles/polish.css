@@ -45,3 +45,30 @@
 .copy pre { flex: 1; min-width: 0; margin: 0; white-space: pre-wrap; word-break: break-word; font: 13px/1.55 var(--mono); color: var(--needs); }
 .copy button { flex: none; height: 30px; padding: 0 12px; border-radius: 8px; border: 1px solid var(--line); font-size: 13px; }
 .copy button:hover { border-color: var(--needs); background: var(--needs-dim); }
+
+/* ---------- ⌘K ---------- */
+.kbd { height: 26px; padding: 0 8px; border-radius: 7px; border: 1px solid var(--line); color: var(--fg-3); font: 500 12px var(--mono); margin-right: 12px; }
+.kbd:hover { color: var(--fg); border-color: var(--fg-3); }
+.pal { position: fixed; inset: 0; z-index: 80; background: rgba(8, 9, 12, .55); backdrop-filter: blur(3px); display: grid; justify-items: center; align-items: start; padding: 12vh 16px 16px; }
+.pal__box { width: min(620px, 100%); border-radius: 16px; background: var(--ink-high); border: 1px solid var(--line); box-shadow: 0 30px 80px rgba(0, 0, 0, .6); overflow: hidden; animation: pal-in .18s var(--ease); }
+.pal__input { width: 100%; height: 56px; padding: 0 20px; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: var(--fg); font: 500 17px var(--ui); }
+.pal__input:focus { outline: none; }
+.pal__list { list-style: none; margin: 0; padding: 6px; max-height: 50vh; overflow-y: auto; }
+.pal__item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; border-radius: 10px; cursor: pointer; font-size: 14.5px; }
+.pal__item[aria-selected='true'] { background: var(--ink-raised); box-shadow: inset 2px 0 0 var(--needs); }
+.pal__hint { color: var(--fg-3); font: 12px var(--mono); flex: none; }
+.pal__empty { padding: 18px 14px; color: var(--fg-3); font-size: 14px; }
+.pal__foot { padding: 8px 16px; border-top: 1px solid var(--line-soft); color: var(--fg-3); font: 11.5px var(--mono); }
+@keyframes pal-in { from { opacity: 0; transform: translateY(-6px) scale(.985); } to { opacity: 1; transform: none; } }
+
+/* ---------- skeleton ---------- */
+.sk { border-radius: 12px; background: linear-gradient(90deg, var(--ink-raised) 0%, var(--ink-high) 50%, var(--ink-raised) 100%); background-size: 200% 100%; animation: sk 1.4s ease-in-out infinite; }
+.sk--title { height: 54px; width: min(620px, 80%); margin-top: 54px; }
+.sk--line { height: 18px; width: min(460px, 60%); margin-top: 16px; }
+.sk--card { height: 300px; border-radius: 16px; }
+@keyframes sk { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .pal__box, .sk { animation: none; }
+  .guide__bar span { transition: none; }
+}

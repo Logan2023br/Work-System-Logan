@@ -16,6 +16,8 @@ import Team from './components/Team'
 import Login from './components/Login'
 import { IconDesk, IconClock, IconPlug, IconThink, IconTeam, IconGuide } from './components/Icons'
 import Guide from './components/Guide'
+import CommandPalette, { type Command } from './components/CommandPalette'
+import { DeskSkeleton } from './components/Skeleton'
 
 type View = 'desk' | 'team' | 'schedule' | 'connections' | 'reflect' | 'guide'
 
@@ -60,6 +62,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
   const [booted, setBooted] = useState(false)
   const [now, setNow] = useState(new Date())
   const [toast, setToast] = useState<string | null>(null)
+  const [palette, setPalette] = useState(false)
 
   const seq = useRef(0)
   const refresh = useCallback(() => {
@@ -94,6 +97,17 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
     const id = window.setTimeout(() => setBooted(true), 90)
     return () => window.clearTimeout(id)
   }, [ws])
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault()
+        setPalette((p) => !p)
+      }
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [])
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(new Date()), 1000)
@@ -156,6 +170,12 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
   }
 
 
+  const commands: Command[] = [
+    ...NAV.map((n) => ({ id: `v-${n.id}`, label: n.label, hint: 'Mục', run: () => go(n.id) })),
+    ...(ws?.tasks ?? []).map((t) => ({ id: `t-${t.id}`, label: t.name, hint: ws?.isMine ? 'Task của bạn' : `Task của ${ws?.owner.name}`, run: () => { setView('desk'); setOpenTask(t.id) } })),
+    ...people.filter((p) => p.active).map((p) => ({ id: `p-${p.id}`, label: p.name, hint: p.id === me.id ? 'Bàn của bạn' : 'Đồng nghiệp', run: () => visit(p.id) })),
+  ]
+
   const readOnly = ws ? !ws.isMine : true
   const who = ws && !ws.isMine ? ws.owner.name : 'bạn'
   const waiting = ws ? ws.tasks.filter((t) => t.state === 'needs-you' || t.state === 'blocked').length : 0
@@ -201,6 +221,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
               {waiting} việc cần bạn
             </span>
           )}
+          <button className="kbd" onClick={() => setPalette(true)} aria-label="Tìm nhanh">⌘K</button>
           <span className="clock">{clock(now.toISOString())}</span>
         </header>
 
@@ -226,7 +247,7 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
         {view === 'team' ? (
           <Team people={people} meId={me.id} now={now} onVisit={visit} isAdmin={me.role === 'admin'} onDeactivate={deactivate} />
         ) : !ws ? (
-          <div className="loading">đang đọc dữ liệu…</div>
+          <DeskSkeleton />
         ) : (
           <div key={task ? `task-${task.id}` : `${viewing}-${view}`} className="fadein">
             {task ? (
@@ -245,6 +266,8 @@ function Shell({ me, onMe }: { me: Me; onMe: (m: Me) => void }) {
           </div>
         )}
       </div>
+
+      <CommandPalette open={palette} items={commands} onClose={() => setPalette(false)} />
 
       <AnimatePresence>
         {toast && (
